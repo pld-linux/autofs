@@ -24,9 +24,9 @@
 
 # Check that networking is up.
 if is_no "${NETWORKING}"; then
-        # nls "ERROR: Networking is down. %s can't be run." <service>
-        msg_network_down automounter
-        exit 1
+	# nls "ERROR: Networking is down. %s can't be run." <service>
+	msg_network_down automounter
+	exit 1
 fi
 			
 DAEMON=/usr/sbin/automount
@@ -41,8 +41,7 @@ getmounts()
 #
 # Check for local maps to be loaded
 #
-if [ -f /etc/autofs/auto.master ]
-then
+if [ -f /etc/autofs/auto.master ]; then
     cat /etc/autofs/auto.master | sed -e '/^#/d' -e '/^$/d'| (
 	while read dir map options
 	do
@@ -98,39 +97,39 @@ case "$1" in
   start)
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/autofs ]; then
-                msg_starting automounter
+		msg_starting automounter
 		busy
 		if getmounts | sh; then
-		    deltext;ok
+			deltext;ok
 		else
-		    deltext;ok
+			deltext;ok
 		fi
-                RETVAL=$?
+		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/autofs
 	else
-                msg_already_running automounter
+		msg_already_running automounter
 		exit 1
 	fi
 	;;
   stop)
-        if [ -f /var/lock/subsys/autofs ]; then
-                msg_stopping automount -TERM
-                killproc automount
-                rm -f /var/lock/subsys/autofs >/dev/null 2>&1
-        else
-                msg_not_running automounter
-                exit 1
-        fi
+	if [ -f /var/lock/subsys/autofs ]; then
+		msg_stopping automount -TERM
+		killproc automount
+		rm -f /var/lock/subsys/autofs >/dev/null 2>&1
+	else
+		msg_not_running automounter
+		exit 1
+	fi
 	;;
   restart|reload)
 	$0 stop
 	$0 start
 	;;
   status)
-	echo "Configured Mount Points:"
+	nls "Configured Mount Points:"
 	getmounts
 	echo ""
-	echo "Active Mount Points:"
+	nls "Active Mount Points:"
 	ps axw|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
 		while read pid tt stat time command; do echo $command; done
 	)
