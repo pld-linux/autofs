@@ -5,10 +5,10 @@ Summary(pl):	Demon autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	3.1.3
-Release:	2d
+Release:	3
 Copyright:	GPL
 Group:		Daemons
-Group(pl):	Serwery
+Group(pl):	Demony
 URL:		ftp://ftp.kernel.org/pub/linux/daemons/autofs
 Source0:	%{name}-%{version}.tar.bz2
 Source1:	%{name}.init
@@ -26,7 +26,7 @@ include network filesystems, CD-ROMs, floppies, and so forth.
 %description -l pl
 Autofs jest demonem, który montuje automatycznie systemy plików je¿eli
 je u¿ywasz i odmontowuje pó¼niej, je¿eli ich nie u¿ywasz. Mo¿e montowaæ
-sieciwy system plików, CD-romy, stacje dyskietek i inne.
+sieciowy system plików, CD-romy, stacje dyskietek i inne.
 
 %description -l de
 autofs ist ein Dämon, der Dateisysteme automatisch montiert, wenn sie 
@@ -73,8 +73,8 @@ install -d $RPM_BUILD_ROOT/misc
 for i in auto.home auto.misc auto.var auto.tmp; do
 touch $RPM_BUILD_ROOT/etc/autofs/$i; done
 
-gzip -9 $RPM_BUILD_ROOT/usr/man/man[58]/*
-bzip2 -9 NEWS README 
+gzip -9nf $RPM_BUILD_ROOT/usr/man/man[58]/* \
+	NEWS README 
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -89,10 +89,10 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc {NEWS,README}.bz2 
+%doc {NEWS,README}.gz 
 
 %attr(750,root,root) %config /etc/rc.d/init.d/autofs
-%attr(750,root,root) %dir /etc/autofs
+%attr(-,root,root,750) %dir /etc/autofs
 %attr(640,root,root) %config %verify(not size mtime md5) /etc/autofs/*
 %attr(755,root,root) /usr/sbin/automount
 
@@ -100,9 +100,18 @@ fi
 
 %dir /usr/lib/autofs
 %attr(755,root,root) /usr/lib/autofs/*
-%attr(644,root, man) /usr/man/man[58]/*
+/usr/man/man[58]/*
 
 %changelog
+* Mon Apr  5 1999 Piotr Czerwiñski <pius@pld.org.pl>
+  [3.1.3-3]
+- changed Group(pl) to Demony,
+- gzipping documentation,
+- added -nf to gzip parameters,
+- removed man group from man pages,
+- fixed dir permissions,
+- cosmetic changes for common l&f.
+
 * Sat Oct 10 1998 Wojtek ¦lusarczyk <wojtek@shadow.eu.org>
   [3.1.3-1d]
 - fixed pl translation,
