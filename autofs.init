@@ -108,15 +108,14 @@ case "$1" in
 	    touch /var/lock/subsys/automount
 	    deltext
 	    ok
+	else
+	    echo "Automounter already is running"
 	fi
 	;;
   stop)
 	show Stopping automounter
-	busy
 	killproc automount -TERM
 	rm -f /var/lock/subsys/automount
-	deltext
-	ok
 	;;
   restart|reload)
 	if [ ! -f /var/lock/subsys/automount ]; then
