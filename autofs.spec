@@ -130,8 +130,6 @@ install %{SOURCE6} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 
-gzip -9nf NEWS README
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -157,7 +155,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc {NEWS,README}.gz
+%doc NEWS README
 
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
