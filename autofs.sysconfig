@@ -4,3 +4,5 @@
 # completely.
 #
 TIMEOUT=60
+# Set it to yes if you want autofs to take maps from YP
+USE_YP=no
