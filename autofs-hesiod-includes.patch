@@ -1,0 +1,12 @@
+diff -burN autofs-4.0.0pre10.orig/modules/lookup_hesiod.c autofs-4.0.0pre10/modules/lookup_hesiod.c
+--- autofs-4.0.0pre10.orig/modules/lookup_hesiod.c	2004-04-14 18:16:35.384165512 +0200
++++ autofs-4.0.0pre10/modules/lookup_hesiod.c	2004-04-14 18:17:01.534190104 +0200
+@@ -16,7 +16,7 @@
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+ #include <resolv.h>
+-#include <hesiod.h>
++#include <bind/hesiod.h>
+ 
+ #define MODULE_LOOKUP
+ #include "automount.h"
