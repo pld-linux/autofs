@@ -9,7 +9,7 @@
 #		We first look for a local /etc/autofs/auto.master, then a YP
 #		map with that name
 #
-# processname:	automount
+# processname:	autofs
 # config:	/etc/autofs/auto.master
 
 
@@ -95,7 +95,7 @@ fi
 case "$1" in
   start)
 	# Check if the service is already running?
-	if [ ! -f /var/lock/subsys/automount ]; then
+	if [ ! -f /var/lock/subsys/autofs ]; then
                 msg_starting automounter
 		busy
 		if getmounts | sh; then
@@ -104,17 +104,17 @@ case "$1" in
 		    deltext;ok
 		fi
                 RETVAL=$?
-		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/automount
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/autofs
 	else
                 msg_Already_Running automounter
 		exit 1
 	fi
 	;;
   stop)
-        if [ -f /var/lock/subsys/automount ]; then
+        if [ -f /var/lock/subsys/autofs ]; then
                 msg_stopping automount -TERM
                 killproc automount
-                rm -f /var/lock/subsys/automount >/dev/null 2>&1
+                rm -f /var/lock/subsys/autofs >/dev/null 2>&1
         else
                 msg_Not_Running automounter
                 exit 1
