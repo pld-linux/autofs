@@ -71,7 +71,6 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 %patch7 -p1
 
 %build
-LDFLAGS="-s"; export LDFLAGS
 %configure
  
 %{__make} 
@@ -93,12 +92,9 @@ install %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.mnt
 install %{SOURCE5} 	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
 install %{SOURCE6} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
-touch			$RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
+touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 
-strip --strip-unneeded	$RPM_BUILD_ROOT%{_libdir}/autofs/*
-
-gzip -9nf $RPM_BUILD_ROOT%{_mandir}/man[58]/* \
-	NEWS README 
+gzip -9nf NEWS README 
 
 %post
 /sbin/chkconfig --add autofs
