@@ -25,7 +25,7 @@
 # Check that networking is up.
 if is_no "${NETWORKING}"; then
         # nls "ERROR: Networking is down. %s can't be run." <service>
-        msg_Network_Down automounter
+        msg_network_down automounter
         exit 1
 fi
 			
@@ -106,7 +106,7 @@ case "$1" in
                 RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/autofs
 	else
-                msg_Already_Running automounter
+                msg_already_running automounter
 		exit 1
 	fi
 	;;
@@ -116,7 +116,7 @@ case "$1" in
                 killproc automount
                 rm -f /var/lock/subsys/autofs >/dev/null 2>&1
         else
-                msg_Not_Running automounter
+                msg_not_running automounter
                 exit 1
         fi
 	;;
@@ -134,7 +134,7 @@ case "$1" in
 	)
 	;;
   *)
-	msg_Usage: "$0 {start|stop|restart|status}"
+	msg_usage: "$0 {start|stop|restart|status}"
 	exit 1
 esac
 
