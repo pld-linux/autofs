@@ -8,7 +8,7 @@
 #	We first look for a local /etc/autofs/auto.master, then a YP
 #	map with that name
 #
-# chkconfig: - 72 08
+# chkconfig: 2345 72 08
 # description: automatically mounts filesystems when you use \
 #   them, and unmounts them later when you are not using them.
 # processname: automount
@@ -34,7 +34,7 @@ localoptions=''
 #	order #	to activate all the mount points. It is used to figure out
 #	the difference of automount points in case of a reload
 #
-function getmounts()
+getmounts()
 {
 #
 #	Check for local maps to be loaded
@@ -118,31 +118,13 @@ case "$1" in
 	deltext
 	ok
 	;;
-  reload|restart)
+  restart|reload)
 	if [ ! -f /var/lock/subsys/automount ]; then
 		echo "Automounter not running"
 		exit 1
 	fi
-	echo "Checking for changes to /etc/autofs/auto.master ...."
-	TMP1=`mktemp /tmp/autofs.XXXXXX` || { echo "could not make temp file" >&2; exit 1; }
-	TMP2=`mktemp /tmp/autofs.XXXXXX` || { echo "could not make temp file" >&2; exit 1; }
-	getmounts >$TMP1
-	ps ax|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
-	    while read pid tt stat time command; do
-		echo "$command" >>$TMP2
-		if ! grep -q "^$command" $TMP2; then
-			kill -USR2 $pid
-			echo "Stop $command"
-		fi
-	    done
-	)
-	cat $TMP1 | ( while read x; do
-		if ! grep -q "^$x" $TMP2; then
-			$x
-			echo "Start $x"
-		fi
-        done )
-	rm -f $TMP1 $TMP2
+	$0 stop
+	$0 start
 	;;
   status)
 	echo "Configured Mount Points:"
