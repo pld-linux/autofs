@@ -9,14 +9,12 @@ Release:	3
 Copyright:	GPL
 Group:		Daemons
 Group(pl):	Demony
-URL:		ftp://ftp.kernel.org/pub/linux/daemons/autofs
-Source0:	%{name}-%{version}.tar.bz2
-Source1:	%{name}.init
-Patch:		%{name}-%{version}.patch
+Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/%{name}-%{version}.tar.bz2
+Source1:	autofs.init
+Patch:		autofs.patch
 Buildroot:	/tmp/%{name}-%{version}-root
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
-Exclusivearch:	i386
 
 %description
 autofs is a daemon which automatically mounts filesystems when you use
@@ -48,52 +46,59 @@ sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 %patch -p1 
 
 %build
-CFLAGS=$RPM_OPT_FLAGS LDFLAGS=-s \
-    ./configure \
-    --prefix=/usr \
-    --sysconfdir=/etc/autofs
+CFLAGS="$RPM_OPT_FLAGS" LDFLAGS="-s" \
+./configure \
+	--prefix=/usr \
+	--sysconfdir=/etc/autofs
 
 make 
 
 %install
 rm -rf $RPM_BUILD_ROOT
 
-install -d $RPM_BUILD_ROOT/usr/{sbin,lib/autofs,man/{man5,man8}}
-install -d $RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs}
+install -d $RPM_BUILD_ROOT/{misc,usr/{sbin,lib/autofs,man/{man5,man8}}} \
+	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs}
 
-make sbindir=$RPM_BUILD_ROOT/usr/sbin \
-mandir=$RPM_BUILD_ROOT/usr/man \
-autofslibdir=$RPM_BUILD_ROOT/usr/lib/autofs install
+make install \
+	sbindir=$RPM_BUILD_ROOT/usr/sbin \
+	mandir=$RPM_BUILD_ROOT/usr/man \
+	autofslibdir=$RPM_BUILD_ROOT/usr/lib/autofs
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
 install samples/auto.* $RPM_BUILD_ROOT/etc/autofs
 
-install -d $RPM_BUILD_ROOT/misc
+touch $RPM_BUILD_ROOT/etc/autofs/auto.{home,misc,var,tmp}
 
-for i in auto.home auto.misc auto.var auto.tmp; do
-touch $RPM_BUILD_ROOT/etc/autofs/$i; done
+strip --strip-unneeded $RPM_BUILD_ROOT/usr/lib/autofs/*
 
 gzip -9nf $RPM_BUILD_ROOT/usr/man/man[58]/* \
 	NEWS README 
 
+%post -n autofs
+/sbin/chkconfig --add autofs
+if test -r /var/run/autofs.pid; then
+	/etc/rc.d/init.d/autofs stop >&2
+	/etc/rc.d/init.d/autofs start >&2
+else
+	echo "Run \"/etc/rc.d/init.d/autofs start\" to start autofs daemon."
+fi
+
+%preun -n autofs
+if [ "$1" = "0" ]; then
+	/sbin/chkconfig --del autofs
+	/etc/rc.d/init.d/autofs stop >&2
+fi
+
 %clean
 rm -rf $RPM_BUILD_ROOT
-
-%post
-/sbin/chkconfig --add autofs
-
-%preun
-if [ $1 = 0 ]; then
-    /sbin/chkconfig --del autofs
-fi
 
 %files
 %defattr(644,root,root,755)
 %doc {NEWS,README}.gz 
 
-%attr(750,root,root) %config /etc/rc.d/init.d/autofs
-%attr(-,root,root,750) %dir /etc/autofs
-%attr(640,root,root) %config %verify(not size mtime md5) /etc/autofs/*
+%attr(754,root,root) %config /etc/rc.d/init.d/autofs
+%dir /etc/autofs
+%attr(644,root,root) %config %verify(not size mtime md5) /etc/autofs/*
 %attr(755,root,root) /usr/sbin/automount
 
 %dir /misc
@@ -103,8 +108,13 @@ fi
 /usr/man/man[58]/*
 
 %changelog
-* Mon Apr  5 1999 Piotr Czerwiñski <pius@pld.org.pl>
+* Tue Apr  6 1999 Tomasz K³oczko <kloczek@rudy.mif.pg.gda.pl>
   [3.1.3-3]
+- stripping autofs modules,
+- modifications %post, %preun for standarizing this sections; this allow stop
+  service on uninstall and automatic restart on upgrade.
+
+* Mon Apr  5 1999 Piotr Czerwiñski <pius@pld.org.pl>
 - changed Group(pl) to Demony,
 - gzipping documentation,
 - added -nf to gzip parameters,
