@@ -92,13 +92,13 @@ fi
 %doc {NEWS,README}.gz 
 
 %attr(750,root,root) %config /etc/rc.d/init.d/autofs
-%attr(-,root,root,750) %dir /etc/autofs
+%attr(750,root,root) %dir /etc/autofs
 %attr(640,root,root) %config %verify(not size mtime md5) /etc/autofs/*
 %attr(755,root,root) /usr/sbin/automount
 
 %dir /misc
-
 %dir /usr/lib/autofs
+
 %attr(755,root,root) /usr/lib/autofs/*
 /usr/man/man[58]/*
 
