@@ -1,0 +1,11 @@
+--- autofs-4.1.3.orig/include/automount.h	2004-05-18 20:20:08.000000000 +0800
++++ autofs-4.1.3/include/automount.h	2004-06-05 16:26:39.000000000 +0800
+@@ -36,7 +36,7 @@
+ 
+ #define DEFAULT_TIMEOUT (5*60)			/* 5 minutes */
+ #define AUTOFS_LOCK	"/var/lock/autofs"	/* To serialize access to mount */
+-#define MOUNTED_LOCK	"_PATH_MOUNTED~"	/* mounts' lock file */
++#define MOUNTED_LOCK	_PATH_MOUNTED "~"	/* mounts' lock file */
+ #define MTAB_NOTUPDATED 0x1000			/* mtab succeded but not updated */
+ #define NOT_MOUNTED     0x0100			/* path notmounted */
+ 
