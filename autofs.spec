@@ -69,6 +69,7 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 #%patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 %build
 %configure
