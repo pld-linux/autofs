@@ -1,0 +1,14 @@
+# This is an automounter map and it has the following format
+# key [ -mount-options-separated-by-comma ] location
+# Details may be found in the autofs(5) manpage
+
+kernel		-ro			ftp.kernel.org:/pub/linux
+cdrom		-fstype=iso9660,ro,nodev,nosuid	:/dev/cdrom
+# Beware that popping out a floppy disc while it is mounted is a VERY
+# DANGEROUS OPERATION, and can result in disc corruption.  If you have
+# a floppy drive where this is possible (i.e. most PCs), you are warned!
+#floppy		-fstype=auto,nodev,nosuid	:/dev/fd0
+
+# The following are to give you some additional ideas
+#zip		-fstype=ext2		:/dev/hdc
+#jaz		-fstype=auto		:/dev/sda

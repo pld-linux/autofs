@@ -19,15 +19,13 @@
 # Get network config
 . /etc/sysconfig/network
 
-# Get service config
-[ -f /etc/sysconfig/inetd ] && . /etc/sysconfig/inetd
-
 # Check that networking is up.
 if [ "${NETWORKING}" = "no" ]; then
 	echo "WARNING: Networking is down. Autofs service can't be runed."
 	exit 1
 fi
 
+DAEMON=usr/sbin/automount
 
 # 	We can add local options here
 #	e.g. localoptions='rsize=8192,wsize=8192'
@@ -42,7 +40,7 @@ localoptions=''
 getmounts()
 {
 #
-#	Check for local maps to be loaded
+# Check for local maps to be loaded
 #
 if [ -f /etc/autofs/auto.master ]
 then
@@ -52,22 +50,14 @@ then
 	    if [ ! -z "$dir" -a ! -z "$map" \
 			-a x`echo "$map" | cut -c1` != 'x-' ]
 	    then
-		map=`echo "/etc/autofs/$map" | sed -e 's:^/etc/autofs/:/:'`
- 		# special: treat -t or --timeout (or any reasonable derivative)
- 		# specially, since it can't be made a normal mount option.
- 		if echo $options | grep -- '-t' >/dev/null 2>&1 ; then
- 		    mountoptions="--timeout $(echo $options | \
- 		      sed 's/^.*-t\(imeout\)*[ \t]*\([0-9][0-9]*\).*$/\2/g')"
- 		fi
- 		options=`echo "$options" | sed -e '
- 		  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
- 		  s/\(^\|[ \t]\)-/\1/g'`
+		map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
+		options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
 		if [ -x $map ]; then
-		    echo "/usr/sbin/automount $mountoptions $dir program $map $options $localoptions"
+		    echo "$DAEMON $daemonoptions $dir program $map $options $localoptions"
 		elif [ -f $map ]; then
-		    echo "/usr/sbin/automount $mountoptions $dir file $map $options $localoptions"
+		    echo "$DAEMON $daemonoptions $dir file $map $options $localoptions"
 		else
-		    echo "/usr/sbin/automount $mountoptions $dir `basename $map` $options $localoptions"
+		    echo "$DAEMON $daemonoptions $dir `basename $map` $options $localoptions"
 		fi
 	    fi
 	done
@@ -75,7 +65,7 @@ then
 fi
 
 #
-#	Check for YellowPage maps to be loaded
+# Check for YellowPage maps to be loaded
 #
 if [ -e /usr/bin/ypcat ] && [ `ypcat -k auto.master 2>/dev/null | wc -l` -gt 0 ]
 then
@@ -90,10 +80,10 @@ then
 		    mountoptions="--timeout $(echo $options | \
 		      sed 's/^.*-t\(imeout\)*[ \t]*\([0-9][0-9]*\).*$/\2/g')"
 		fi
-		options=`echo "$options" | sed -e '
-		  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
-		  s/\(^\|[ \t]\)-/\1/g'`
-		echo "/usr/sbin/automount $mountoptions $dir yp $map $options $localoptions"
+                options=`echo "$options" | sed -e '
+                  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
+                  s/\(^\|[ \t]\)-/\1/g'`
+		echo "$DAEMON $daemonoptions $mountoptions $dir yp $map $options $localoptions"
 	    fi
 	done
     )
@@ -109,9 +99,11 @@ case "$1" in
 	if [ ! -f /var/lock/subsys/automount ]; then
 		show Starting automounter
 		busy
-		getmounts | sh
-		deltext
-		ok
+		if getmounts | sh; then
+		    deltext;ok
+		else
+		    deltext;ok
+		fi
 	else
 	    echo "automount already is running"
 	fi

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# $Id$
+
+# Look at what a host is exporting to determine what we can mount.
+# This is very simple, but it appears to work surprisingly well
+
+key="$1"
+opts="-fstype=nfs,hard,intr,nodev,nosuid"
+
+# Showmount comes in a number of names and varieties.  "showmount" is
+# typically an older version which accepts the '--no-headers' flag
+# but ignores it.  "kshowmount" is the newer version installed with knfsd,
+# which both accepts and acts on the '--no-headers' flag.
+#SHOWMOUNT="kshowmount --no-headers -e $key"
+#SHOWMOUNT="showmount -e $key | tail +2"
+
+# Newer distributions get this right
+SHOWMOUNT="showmount --no-headers -e $key"
+
+$SHOWMOUNT | sort +0 | sed -e "s|^\([^ 	]*\).*|$key\1 $opts $key:\1|"
