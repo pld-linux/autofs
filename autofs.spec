@@ -4,12 +4,12 @@ Summary(fr):	démon autofs
 Summary(pl):	Demon autofs 
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
-Version:	4.0.0pre7
-Release:	24
+Version:	4.0.0pre10
+Release:	1
 License:	GPL
 Group:		Daemons
 Group(pl):	Serwery
-Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/testing-v4/%{name}-%{version}.tar.gz
+Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/testing-v4/%{name}-%{version}.tar.bz2
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.misc
@@ -19,8 +19,9 @@ Source6:	%{name}.sysconfig
 Patch0:		%{name}-clean.patch
 Patch1:		%{name}-doc.patch
 Patch2:		%{name}-hesiod-bind.patch
+# Needed to check !!
 Patch3:		%{name}-initialize.patch
-Patch4:		%{name}-ldap.patch
+Patch4:		%{name}-man.patch
 Patch5:		%{name}-linux-2.3.patch
 Patch6:		%{name}-loop.patch
 Patch7:		%{name}-modules.patch
@@ -64,7 +65,7 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
+#%patch3 -p1
 %patch4 -p1
 #%patch5 -p1
 %patch6 -p1
