@@ -4,14 +4,17 @@ Summary(fr):	démon autofs
 Summary(pl):	Demon autofs 
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
-Version:	3.1.3
-Release:	6
+Version:	4.0.0pre6
+Release:	1
 Copyright:	GPL
 Group:		Daemons
 Group(pl):	Serwery
-Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/%{name}-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/%{name}-%{version}.tar.gz
 Source1:	autofs.init
-Patch:		autofs.patch
+Source2:	autofs-auto.master
+Source3:	autofs-auto.misc
+Source4:	autofs-auto.mnt
+Source5:	autofs-auto.net
 Buildroot:	/tmp/%{name}-%{version}-root
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
@@ -46,7 +49,6 @@ sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
 %prep
 %setup -q
-%patch -p1 
 
 %build
 LDFLAGS="-s"; export LDFLAGS
@@ -57,20 +59,22 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 
-install -d $RPM_BUILD_ROOT/{misc,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
+install -d $RPM_BUILD_ROOT/{misc,net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs}
 
 make install \
-	sbindir=$RPM_BUILD_ROOT%{_sbindir} \
-	mandir=$RPM_BUILD_ROOT%{_mandir} \
-	autofslibdir=$RPM_BUILD_ROOT%{_libdir}/autofs
+	INSTALLROOT=$RPM_BUILD_ROOT
 
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
-install samples/auto.* $RPM_BUILD_ROOT/etc/autofs
+install %{SOURCE1}	$RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
 
-touch $RPM_BUILD_ROOT/etc/autofs/auto.{home,misc,var,tmp}
+install %{SOURCE2}	$RPM_BUILD_ROOT/etc/autofs/auto.master
+install %{SOURCE3}	$RPM_BUILD_ROOT/etc/autofs/auto.misc
+install %{SOURCE4}	$RPM_BUILD_ROOT/etc/autofs/auto.mnt
+install %{SOURCE5} 	$RPM_BUILD_ROOT/etc/autofs/auto.net
 
-strip --strip-unneeded $RPM_BUILD_ROOT%{_libdir}/autofs/*
+touch			$RPM_BUILD_ROOT/etc/autofs/auto.{home,misc,var,tmp}
+
+strip --strip-unneeded	$RPM_BUILD_ROOT%{_libdir}/autofs/*
 
 gzip -9nf $RPM_BUILD_ROOT%{_mandir}/man[58]/* \
 	NEWS README 
@@ -100,10 +104,17 @@ rm -rf $RPM_BUILD_ROOT
 
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
-%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/*
+%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.home
+%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.master
+%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.misc
+%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.mnt
+%attr(755,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.net
+%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.tmp
+%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.var
 %attr(755,root,root) %{_sbindir}/automount
 
 %dir /misc
+%dir /net
 
 %dir %{_libdir}/autofs
 %attr(755,root,root) %{_libdir}/autofs/*
