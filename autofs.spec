@@ -28,7 +28,7 @@ Patch8:		%{name}-open_max.patch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
-Requires:	rc-scripts
+Prereq:		rc-scripts
 
 %define		_sysconfdir	/etc/autofs
 
