@@ -25,28 +25,30 @@ Requires:	rc-scripts
 
 %description
 autofs is a daemon which automatically mounts filesystems when you use
-them, and unmounts them later when you are not using them.  This can
+them, and unmounts them later when you are not using them. This can
 include network filesystems, CD-ROMs, floppies, and so forth.
 
 %description -l de
 autofs ist ein Dämon, der Dateisysteme automatisch montiert, wenn sie
-benutzt werden, und sie später bei Nichtbenutzung wieder demontiert.  Dies
-kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches einschließen.
+benutzt werden, und sie später bei Nichtbenutzung wieder demontiert.
+Dies kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches
+einschließen.
 
 %description -l fr
 autofs est un démon qui monte automatiquement les systèmes de fichiers
-lorsqu'on les utilise et les démonte lorsqu'on ne les utilise plus. Cela
-inclus les systèmes de fichiers réseau, les CD-ROMs, les disquettes, etc.
+lorsqu'on les utilise et les démonte lorsqu'on ne les utilise plus.
+Cela inclus les systèmes de fichiers réseau, les CD-ROMs, les
+disquettes, etc.
 
 %description -l pl
-Autofs jest demonem, który montuje automatycznie systemy plików je¿eli je
-u¿ywasz i odmontowuje pó¼niej, je¿eli ich nie u¿ywasz. Mo¿e montowaæ
-sieciowy system plików, CD-romy, stacje dyskietek i inne.
+Autofs jest demonem, który montuje automatycznie systemy plików je¿eli
+je u¿ywasz i odmontowuje pó¼niej, je¿eli ich nie u¿ywasz. Mo¿e
+montowaæ sieciowy system plików, CD-romy, stacje dyskietek i inne.
 
 %description -l tr
-autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden baðlar ve
-kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem, að dosya
-sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
+autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden
+baðlar ve kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem,
+að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
 %prep
 %setup -q
