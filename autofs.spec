@@ -5,7 +5,7 @@ Summary(pl):	Demon autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.0.0pre10
-Release:	3
+Release:	4
 Epoch:		1
 License:	GPL
 Group:		Daemons
@@ -28,6 +28,7 @@ Patch5:		%{name}-linux-2.3.patch
 Patch6:		%{name}-loop.patch
 Patch7:		%{name}-modules.patch
 Patch8:		%{name}-open_max.patch
+BuildRequires:	openldap-devel
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
@@ -62,6 +63,18 @@ autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden
 baðlar ve kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem,
 að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
+%package ldap
+Summary:	LDAP lookup module for autofs
+Summary(pl):	Modu³ LDAP dla autofs
+Group:		Daemons
+Group(de):	Server
+Group(pl):	Serwery
+Requires:	%{name} = %{version}
+
+%description ldap
+This package contains the autofs module necessary to use automount
+maps stored on an LDAP server.
+
 %prep
 %setup -q
 %patch0 -p1
@@ -75,6 +88,7 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 %patch8 -p1
 
 %build
+chmod 755 configure
 autoconf
 %configure2_13
  
@@ -144,6 +158,12 @@ rm -rf $RPM_BUILD_ROOT
 %dir /net
 
 %dir %{_libdir}/autofs
-%attr(755,root,root) %{_libdir}/autofs/*
+%attr(755,root,root) %{_libdir}/autofs/mount_*
+%attr(755,root,root) %{_libdir}/autofs/parse_*
+%attr(755,root,root) %{_libdir}/autofs/lookup_[^l]*
 
 %{_mandir}/man[58]/*
+
+%files ldap
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/autofs/lookup_ldap.so
