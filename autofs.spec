@@ -7,7 +7,7 @@ Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.1.3
-Release:	1
+Release:	2
 Epoch:		1
 License:	GPL
 Group:		Daemons
