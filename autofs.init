@@ -19,18 +19,16 @@
 # Get network config
 . /etc/sysconfig/network
 
+# Demon specified configuration.
+. /etc/sysconfig/autofs
+
 # Check that networking is up.
 if [ "${NETWORKING}" = "no" ]; then
 	echo "WARNING: Networking is down. Autofs service can't be runed."
 	exit 1
 fi
 
-DAEMON=usr/sbin/automount
-
-# 	We can add local options here
-#	e.g. localoptions='rsize=8192,wsize=8192'
-#
-localoptions=''
+DAEMON=/usr/sbin/automount
 
 #
 #	This function will build a list of automount commands to execute in
@@ -53,11 +51,11 @@ then
 		map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
 		options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
 		if [ -x $map ]; then
-		    echo "$DAEMON $daemonoptions $dir program $map $options $localoptions"
+		    echo "$DAEMON --timeout $TIMEOUT $dir program $map $options"
 		elif [ -f $map ]; then
-		    echo "$DAEMON $daemonoptions $dir file $map $options $localoptions"
+		    echo "$DAEMON --timeout $TIMEOUT $dir file $map $options"
 		else
-		    echo "$DAEMON $daemonoptions $dir `basename $map` $options $localoptions"
+		    echo "$DAEMON --timeout $TIMEOUT $dir `basename $map` $options"
 		fi
 	    fi
 	done
@@ -83,7 +81,7 @@ then
                 options=`echo "$options" | sed -e '
                   s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
                   s/\(^\|[ \t]\)-/\1/g'`
-		echo "$DAEMON $daemonoptions $mountoptions $dir yp $map $options $localoptions"
+		echo "$DAEMON --timeout $TIMEOUT $mountoptions $dir yp $map $options"
 	    fi
 	done
     )

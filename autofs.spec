@@ -15,6 +15,7 @@ Source2:	autofs-auto.master
 Source3:	autofs-auto.misc
 Source4:	autofs-auto.mnt
 Source5:	autofs-auto.net
+Source6:	autofs.sysconfig
 Buildroot:	/tmp/%{name}-%{version}-root
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
@@ -60,7 +61,7 @@ make
 rm -rf $RPM_BUILD_ROOT
 
 install -d $RPM_BUILD_ROOT/{misc,net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
-	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs}
+	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs,sysconfig}
 
 make install \
 	INSTALLROOT=$RPM_BUILD_ROOT
@@ -71,6 +72,7 @@ install %{SOURCE2}	$RPM_BUILD_ROOT/etc/autofs/auto.master
 install %{SOURCE3}	$RPM_BUILD_ROOT/etc/autofs/auto.misc
 install %{SOURCE4}	$RPM_BUILD_ROOT/etc/autofs/auto.mnt
 install %{SOURCE5} 	$RPM_BUILD_ROOT/etc/autofs/auto.net
+install %{SOURCE6} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
 touch			$RPM_BUILD_ROOT/etc/autofs/auto.{home,misc,var,tmp}
 
@@ -104,13 +106,14 @@ rm -rf $RPM_BUILD_ROOT
 
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
-%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.home
-%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.master
-%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.misc
-%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.mnt
-%attr(755,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.net
-%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.tmp
-%attr(644,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/auto.var
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/autofs
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.home
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.master
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.misc
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.mnt
+%attr(750,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.net
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.tmp
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.var
 %attr(755,root,root) %{_sbindir}/automount
 
 %dir /misc

@@ -3,5 +3,5 @@
 # Format of this file:
 # mountpoint map options
 # For details of the format look at autofs(8).
-/misc	auto.misc		--timeout 60
+/misc	auto.misc
 /net	auto.net

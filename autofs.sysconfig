@@ -1,0 +1,6 @@
+#
+# Set the minimum timeout, in seconds, until directories are unmounted. The
+# default is 60 seconds. Setting the timeout to zero  disables unmounts
+# completely.
+#
+TIMEOUT=60
