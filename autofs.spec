@@ -4,18 +4,27 @@ Summary(fr):	démon autofs
 Summary(pl):	Demon autofs 
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
-Version:	4.0.0pre6
-Release:	1
+Version:	4.0.0pre7
+Release:	24
 License:	GPL
 Group:		Daemons
 Group(pl):	Serwery
-Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/%{name}-%{version}.tar.gz
-Source1:	autofs.init
-Source2:	autofs-auto.master
-Source3:	autofs-auto.misc
-Source4:	autofs-auto.mnt
-Source5:	autofs-auto.net
-Source6:	autofs.sysconfig
+Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/testing-v4/%{name}-%{version}.tar.gz
+Source1:	%{name}.init
+Source2:	%{name}-auto.master
+Source3:	%{name}-auto.misc
+Source4:	%{name}-auto.mnt
+Source5:	%{name}-auto.net
+Source6:	%{name}.sysconfig
+Patch0:		%{name}-clean.patch
+Patch1:		%{name}-doc.patch
+Patch2:		%{name}-hesiod-bind.patch
+Patch3:		%{name}-initialize.patch
+Patch4:		%{name}-ldap.patch
+Patch5:		%{name}-linux-2.3.patch
+Patch6:		%{name}-loop.patch
+Patch7:		%{name}-modules.patch
+Patch8:		%{name}-open_max.patch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
@@ -52,6 +61,14 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
 %prep
 %setup -q
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+#%patch5 -p1
+%patch6 -p1
+%patch7 -p1
 
 %build
 LDFLAGS="-s"; export LDFLAGS
