@@ -32,9 +32,9 @@ Patch8:		%{name}-open_max.patch
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	openldap-devel
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
 Requires:	mktemp
-Prereq:		rc-scripts
-Prereq:		/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sysconfdir	/etc/autofs
@@ -176,7 +176,7 @@ fi
 %dir %{_libdir}/autofs
 %attr(755,root,root) %{_libdir}/autofs/mount_*
 %attr(755,root,root) %{_libdir}/autofs/parse_*
-%attr(755,root,root) %{_libdir}/autofs/lookup_[^l]*
+%attr(755,root,root) %{_libdir}/autofs/lookup_[!l]*
 
 %{_mandir}/man[58]/*
 
