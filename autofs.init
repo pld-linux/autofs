@@ -129,7 +129,7 @@ case "$1" in
 	getmounts
 	echo ""
 	echo "Active Mount Points:"
-	ps ax|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
+	ps axw|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
 		while read pid tt stat time command; do echo $command; done
 	)
 	;;
