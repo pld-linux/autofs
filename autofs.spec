@@ -100,10 +100,20 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 gzip -9nf NEWS README 
 
 %post
-DESC="autofs daemon"; %chkconfig_add
-	
+/sbin/chkconfig --add autofs
+if test -r /var/lock/subsys/automount; then
+	/etc/rc.d/init.d/autofs restart 1>&2
+else
+	echo "Run \"/etc/rc.d/init.d/autofs start\" to start autofs daemon."
+fi
+
 %preun
-%chkconfig_del
+if [ "$1" = "0" ]; then
+	/sbin/chkconfig --del autofs
+	if [ -f /var/lock/subsys/automount ]; then
+		/etc/rc.d/init.d/autofs stop 1>&2
+	fi
+fi
 
 %clean
 rm -rf $RPM_BUILD_ROOT
