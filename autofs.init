@@ -92,7 +92,7 @@ if is_yes $USE_YP; then
 fi
 }
 
-RETVAL=o
+RETVAL=0
 # See how we were called.
 case "$1" in
   start)
