@@ -5,7 +5,7 @@ Summary(pl):	Demon autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.0.0pre10
-Release:	1
+Release:	2
 License:	GPL
 Group:		Daemons
 Group(de):	Server
@@ -74,7 +74,7 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 %patch8 -p1
 
 %build
-%configure
+%configure2_13
  
 %{__make} 
 
@@ -101,7 +101,11 @@ gzip -9nf NEWS README
 
 %post
 /sbin/chkconfig --add autofs
-if test -r /var/lock/subsys/automount; then
+# triggerpostun would get called after %post
+if [ -f /var/lock/subsys/automount ]; then
+	mv /var/lock/subsys/automount /var/lock/subsys/autofs
+fi
+if test -r /var/lock/subsys/autofs; then
 	/etc/rc.d/init.d/autofs restart 1>&2
 else
 	echo "Run \"/etc/rc.d/init.d/autofs start\" to start autofs daemon."
@@ -110,7 +114,7 @@ fi
 %preun
 if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del autofs
-	if [ -f /var/lock/subsys/automount ]; then
+	if [ -f /var/lock/subsys/autofs ]; then
 		/etc/rc.d/init.d/autofs stop 1>&2
 	fi
 fi
