@@ -92,25 +92,20 @@ if is_yes $USE_YP; then
 fi
 }
 
-#
-#	See how we were called.
-#
+RETVAL=o
+# See how we were called.
 case "$1" in
   start)
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/autofs ]; then
 		msg_starting automounter
 		busy
-		if getmounts | sh; then
-			deltext;ok
-		else
-			deltext;ok
-		fi
+		getmounts | sh 
 		RETVAL=$?
+		[ $RETVAL -eq 0 ] && ok || fail
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/autofs
 	else
 		msg_already_running automounter
-		exit 1
 	fi
 	;;
   stop)
@@ -121,12 +116,12 @@ case "$1" in
 		rm -f /var/lock/subsys/autofs >/dev/null 2>&1
 	else
 		msg_not_running automounter
-		exit 1
 	fi
 	;;
-  restart|reload)
+  restart|force-reload)
 	$0 stop
 	$0 start
+	exit $?
 	;;
   status)
 	nls "Configured Mount Points:"
@@ -138,8 +133,8 @@ case "$1" in
 	)
 	;;
   *)
-	msg_usage "$0 {start|stop|restart|reload|status}"
-	exit 1
+	msg_usage "$0 {start|stop|restart|force-reload|status}"
+	exit 3
 esac
 
 exit $RETVAL
