@@ -1,43 +1,17 @@
-diff -uNr autofs-3.1.4/Makefile.conf.in autofs-3.1.4/Makefile.conf.in
---- autofs-3.1.4/Makefile.conf.in	Fri Jan 21 14:08:10 2000
-+++ autofs-3.1.4/Makefile.conf.in	Tue Feb 29 10:34:33 2000
-@@ -12,6 +12,7 @@
- 
- # Hesiod support: yes (1) no (0)
- HESIOD = @HAVE_HESIOD@
-+HESIOD_BIND = @HAVE_HESIOD_BIND@
- LIBHESIOD = @LIBHESIOD@
- HESIOD_FLAGS = @HESIOD_FLAGS@
- 
-diff -uNr autofs-3.1.4/configure.in autofs-3.1.4/configure.in
---- autofs-3.1.4/configure.in	Fri Jan 21 14:08:10 2000
-+++ autofs-3.1.4/configure.in	Tue Feb 29 10:40:43 2000
-@@ -73,7 +73,9 @@
- 
- HAVE_HESIOD=0
- AC_CHECK_LIB(hesiod, hes_resolve, HAVE_HESIOD=1 LIBHESIOD="$LIBHESIOD -lhesiod", , $LIBRESOLV)
-+AC_CHECK_LIB(bind, hesiod_resolve, HAVE_HESIOD=1 HAVE_HESIOD_BIND=1 LIBHESIOD="$LIBHESIOD -lbind", , $LIBRESOLV)
- AC_SUBST(HAVE_HESIOD)
-+AC_SUBST(HAVE_HESIOD_BIND)
- AC_SUBST(LIBHESIOD)
- AC_SUBST(HESIOD_FLAGS)
- LDFLAGS="${AF_tmp_ldflags}"
-diff -uNr autofs-3.1.4/modules/Makefile autofs-3.1.4/modules/Makefile
---- autofs-3.1.4/modules/Makefile	Tue Feb 29 10:48:15 2000
-+++ autofs-3.1.4/modules/Makefile	Tue Feb 29 10:36:07 2000
+--- ./modules/Makefile.orig	Sat Jun 23 14:16:40 2001
++++ ./modules/Makefile	Sat Jun 23 14:17:51 2001
 @@ -24,6 +24,9 @@
  endif
  
  ifeq ($(HESIOD), 1)
 +  ifeq ($(HESIOD_BIND), 1)
-+    CFLAGS += -DHESIOD_BIND
++	CFLAGS += -DHESIOD_BIND
 +  endif
    SRCS += lookup_hesiod.c  parse_hesiod.c
    MODS += lookup_hesiod.so parse_hesiod.so
  endif
-diff -uNr autofs-3.1.4/modules/lookup_hesiod.c autofs-3.1.4/modules/lookup_hesiod.c
---- autofs-3.1.4/modules/lookup_hesiod.c	Fri Jan 21 14:08:09 2000
-+++ autofs-3.1.4/modules/lookup_hesiod.c	Wed Mar  1 10:07:43 2000
+--- ./modules/lookup_hesiod.c.orig	Sat Jun 23 14:18:07 2001
++++ ./modules/lookup_hesiod.c	Sat Jun 23 14:22:42 2001
 @@ -28,6 +28,9 @@
  
  struct lookup_context {
@@ -55,18 +29,19 @@ diff -uNr autofs-3.1.4/modules/lookup_hesiod.c autofs-3.1.4/modules/lookup_hesio
 +#ifdef HESIOD_BIND
 +  /* Initialize the hesiod context. */
 +  if(hesiod_init(&(ctxt->hesiod_context)) != 0) {
-+    syslog(LOG_CRIT, MODPREFIX "hesiod_init(): %m");
-+    return 1;
++	  syslog(LOG_CRIT, MODPREFIX "hesiod_init(): %m");
++	  return 1;
 +  }
 +#endif
-+
++  
    /* If a map type isn't explicitly given, parse it as hesiod entries. */
    if ( !mapfmt )
      mapfmt = MAPFMT_DEFAULT;
-@@ -73,7 +84,11 @@
+@@ -72,8 +83,11 @@
+ 
    chdir("/");                  /* If this is not here the filesystem stays
                                    busy, for some reason... */
- 
+-
 +#ifdef HESIOD_BIND
 +  hes_result = hesiod_resolve(ctxt->hesiod_context, name, "filsys");
 +#else
@@ -75,7 +50,7 @@ diff -uNr autofs-3.1.4/modules/lookup_hesiod.c autofs-3.1.4/modules/lookup_hesio
  
    if ( !hes_result ) {
      syslog(LOG_NOTICE, MODPREFIX "entry \"%s\" not found in map\n", name);
-@@ -83,7 +98,11 @@
+@@ -83,7 +97,11 @@
    syslog(LOG_DEBUG, MODPREFIX "lookup for \"%s\" gave \"%s\"",
  	 name, hes_result[0]);
    rv = ctxt->parser->parse_mount(root,name,name_len,hes_result[0],ctxt->parser->context);
@@ -87,7 +62,7 @@ diff -uNr autofs-3.1.4/modules/lookup_hesiod.c autofs-3.1.4/modules/lookup_hesio
    return rv;
  }
  
-@@ -93,6 +112,9 @@
+@@ -93,6 +111,9 @@
  {
    struct lookup_context *ctxt = (struct lookup_context *) context;
    int rv = close_parse(ctxt->parser);
@@ -97,3 +72,28 @@ diff -uNr autofs-3.1.4/modules/lookup_hesiod.c autofs-3.1.4/modules/lookup_hesio
    free(ctxt);
    return rv;
  }
+--- ./Makefile.conf.in.orig	Sat Jun 23 14:12:16 2001
++++ ./Makefile.conf.in	Sat Jun 23 14:12:43 2001
+@@ -12,6 +12,7 @@
+ 
+ # Hesiod support: yes (1) no (0)
+ HESIOD = @HAVE_HESIOD@
++HESIOD_BIND = @HAVE_HESIOD_BIND@
+ LIBHESIOD = @LIBHESIOD@
+ HESIOD_FLAGS = @HESIOD_FLAGS@
+ 
+--- ./configure.in.orig	Sat Jun 23 14:12:58 2001
++++ ./configure.in	Sat Jun 23 14:16:32 2001
+@@ -78,10 +78,10 @@
+ if test -z "$HAVE_HESIOD"
+ then
+ 	HAVE_HESIOD=0
+-	AC_CHECK_LIB(hesiod, hes_resolve, HAVE_HESIOD=1 LIBHESIOD="$LIBHESIOD -lhesiod", ,
+-		     $LIBRESOLV)
++	AC_CHECK_LIB(bind, hesiod_resolve, HAVE_HESIOD=1 HAVE_HESIOD_BIND=1 LIBHESIOD="$LIBHESIOD -lbind", , $LIBRESOLV)
+ fi
+ AC_SUBST(HAVE_HESIOD)
++AC_SUBST(HAVE_HESIOD_BIND)
+ AC_SUBST(LIBHESIOD)
+ AC_SUBST(HESIOD_FLAGS)
+ LDFLAGS="${AF_tmp_ldflags}"
