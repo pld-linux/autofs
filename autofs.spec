@@ -21,12 +21,12 @@ Source5:	%{name}-auto.net
 Source6:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-hesiod-includes.patch
-Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-bad_chdir.patch
-Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-mtab_lock.patch
-Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-non_block_ping.patch
-Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-signal-race-fix.patch
-Patch6:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-sock-leak-fix.patch
-Patch7:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-strict.patch
+Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-bad_chdir.patch
+Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-mtab_lock.patch
+Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-non_block_ping.patch
+Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-signal-race-fix.patch
+Patch6:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-sock-leak-fix.patch
+Patch7:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-strict.patch
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	bind-devel
@@ -157,14 +157,14 @@ fi
 
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/autofs
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.home
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.master
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.misc
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.mnt
-%attr(750,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.net
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.tmp
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/auto.var
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/autofs
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.home
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.master
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.misc
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.mnt
+%attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.net
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.tmp
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.var
 %attr(755,root,root) %{_sbindir}/automount
 
 %dir /misc
