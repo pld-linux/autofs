@@ -5,8 +5,8 @@
 #
 # chkconfig:	2345 72 08
 #
-# description:	Script for automount using a Sun-style "master map".
-#		We first look for a local /etc/autofs/auto.master, then a YP
+# description:	Script for automount using a Sun-style "master map". \
+#		We first look for a local /etc/autofs/auto.master, then a YP \
 #		map with that name
 #
 # processname:	autofs
