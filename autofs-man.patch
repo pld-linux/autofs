@@ -8,36 +8,34 @@
  .SH NAME
  /etc/auto.master \- Master Map for automounter
  .SH "DESCRIPTION"
-@@ -44,13 +44,17 @@
- .nf
+@@ -45,14 +45,16 @@
  /home	/etc/auto.home
  /misc	/etc/auto.misc
-+/mnt	yp:mnt.map
+ /mnt	yp:mnt.map
 +/auto	ldap:ldapserver:ou=automount,ou=services,dc=example,dc=com
  .fi
  .RE
  .sp
--This will generate two mountpoints 
--.I /home
+-This will generate three mountpoints 
 +This will generate four mountpoints 
-+.IR /home ,
-+.IR /misc ,
-+.IR /mnt
+ .IR /home ,
+ .IR /misc ,
++.IR /mnt ,
  and
--.IR /misc .
+-.IR /mnt .
 +.IR /auto .
  All accesses to
  .I /home
  will lead to the consultation of the map in
-@@ -58,7 +62,15 @@
- and all accesses to
+@@ -59,10 +63,14 @@
  .I /misc
  will consult the map in
--.IR /etc/auto.misc .
-+.IR /etc/auto.misc ,
+ .IR /etc/auto.misc ,
+-and all accesses to
 +all accesses to
-+.I /mnt
-+will consult the NIS map
+ .I /mnt
+ will consult the NIS map
+-.IR mnt.map .
 +.IR mnt.map ,
 +and all accesses to
 +.I /auto
