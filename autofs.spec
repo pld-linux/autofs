@@ -1,8 +1,8 @@
 Summary:	autofs daemon
-Summary(de):	autofs daemon 
+Summary(de):	autofs daemon
 Summary(es):	Servidor autofs
 Summary(fr):	démon autofs
-Summary(pl):	Demon autofs 
+Summary(pl):	Demon autofs
 Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
@@ -109,8 +109,8 @@ chmod a+w configure
 aclocal
 autoconf
 %configure
- 
-%{__make} 
+
+%{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -130,7 +130,7 @@ install %{SOURCE6} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 
-gzip -9nf NEWS README 
+gzip -9nf NEWS README
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -157,7 +157,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc {NEWS,README}.gz 
+%doc {NEWS,README}.gz
 
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
