@@ -23,10 +23,14 @@
 [ -f /etc/sysconfig/autofs ] && . /etc/sysconfig/autofs
 
 # Check that networking is up.
-if is_no "${NETWORKING}"; then
-	# nls "ERROR: Networking is down. %s can't be run." <service>
-	msg_network_down automounter
-	exit 1
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network ]; then
+		# nls "ERROR: Networking is down. %s can't be run." <service>
+		msg_network_down automounter
+		exit 1
+	fi
+else
+	exit 0
 fi
 			
 DAEMON=/usr/sbin/automount
@@ -42,51 +46,49 @@ getmounts()
 # Check for local maps to be loaded
 #
 if [ -f /etc/autofs/auto.master ]; then
-    cat /etc/autofs/auto.master | sed -e '/^#/d' -e '/^$/d'| (
-	while read dir map options
-	do
-	    if [ ! -z "$dir" -a ! -z "$map" \
-			-a x`echo "$map" | cut -c1` != 'x-' ]
-	    then
-		map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
-		options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
-		if [ -x $map ]; then
-		    echo "$DAEMON --timeout $TIMEOUT $dir program $map $options"
-		elif [ -f $map ]; then
-		    echo "$DAEMON --timeout $TIMEOUT $dir file $map $options"
-		else
-		    echo "$DAEMON --timeout $TIMEOUT $dir `basename $map` $options"
+	cat /etc/autofs/auto.master | sed -e '/^#/d' -e '/^$/d'| (
+	while read dir map options; do
+		if [ ! -z "$dir" -a ! -z "$map" \
+		   -a x`echo "$map" | cut -c1` != 'x-' ]; then
+			map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
+			options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
+			if [ -x $map ]; then
+				echo "$DAEMON --timeout $TIMEOUT $dir program $map $options"
+			elif [ -f $map ]; then
+				echo "$DAEMON --timeout $TIMEOUT $dir file $map $options"
+			else
+				echo "$DAEMON --timeout $TIMEOUT $dir `basename $map` $options"
+			fi
 		fi
-	    fi
 	done
-    )
+	)
 fi
 
 #
 # Check for YellowPage maps to be loaded
 #
 if is_yes $USE_YP; then 
-if [ -e /usr/bin/ypcat ] && [ `ypcat -k auto.master 2>/dev/null | wc -l` -gt 0 ]
-then
-    ypcat -k auto.master | (
-	while read dir map options
-	do
-	    if [ ! -z "$dir" -a ! -z "$map" \
-			-a x`echo "$map" | cut -c1` != 'x-' ]
-	    then
-		map=`echo "$map" | sed -e 's/^auto_/auto./'`
-		if echo $options | grep -- '-t' >/dev/null 2>&1 ; then
-		    mountoptions="--timeout $(echo $options | \
-		      sed 's/^.*-t\(imeout\)*[ \t]*\([0-9][0-9]*\).*$/\2/g')"
-		fi
-                options=`echo "$options" | sed -e '
-                  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
-                  s/\(^\|[ \t]\)-/\1/g'`
-		echo "$DAEMON --timeout $TIMEOUT $mountoptions $dir yp $map $options"
-	    fi
-	done
-    )
-fi
+	if [ -e /usr/bin/ypcat ] && \
+	   [ `ypcat -k auto.master 2>/dev/null | wc -l` -gt 0 ]; then
+		ypcat -k auto.master | (
+		while read dir map options; do
+			if [ ! -z "$dir" -a ! -z "$map" \
+			   -a x`echo "$map" | cut -c1` != 'x-' ]; then
+				map=`echo "$map" | sed -e 's/^auto_/auto./'`
+				if echo $options | \
+				   grep -- '-t' >/dev/null 2>&1; then
+					mountoptions="--timeout $(echo $options | \
+					  sed 's/^.*-t\(imeout\)*[ \t]*\([0-9][0-9]*\).*$/\2/g')"
+				fi
+				options=`echo "$options" | sed -e '
+				  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
+				  s/\(^\|[ \t]\)-/\1/g'`
+				echo "$DAEMON --timeout $TIMEOUT $mountoptions \
+				  $dir yp $map $options"
+			fi
+		done
+		)
+	fi
 fi
 }
 
@@ -113,7 +115,8 @@ case "$1" in
 	;;
   stop)
 	if [ -f /var/lock/subsys/autofs ]; then
-		msg_stopping automount -TERM
+		msg_stopping automounter
+		automount -TERM
 		killproc automount
 		rm -f /var/lock/subsys/autofs >/dev/null 2>&1
 	else
