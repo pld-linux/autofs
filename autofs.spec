@@ -8,7 +8,7 @@ Version:	3.1.3
 Release:	3
 Copyright:	GPL
 Group:		Daemons
-Group(pl):	Demony
+Group(pl):	Serwery
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/%{name}-%{version}.tar.bz2
 Source1:	autofs.init
 Patch:		autofs.patch
