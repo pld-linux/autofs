@@ -12,6 +12,7 @@ Epoch:		1
 License:	GPL
 Group:		Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/testing-v4/%{name}-%{version}.tar.bz2
+# Source0-md5:	45df38e9458bde07315a1bfce099b84a
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.misc
