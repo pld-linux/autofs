@@ -32,6 +32,7 @@ Patch8:		%{name}-open_max.patch
 Patch9:		%{name}-hesiod-includes.patch
 BuildRequires:	automake
 BuildRequires:	autoconf
+BuildRequires:	bind-devel
 BuildRequires:	openldap-devel
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
@@ -84,7 +85,7 @@ Summary(es):	LDAP map support for the autofs package
 Summary(pl):	Modu³ LDAP dla autofs
 Summary(pt_BR):	Suporte a mapas LDAP para o pacote autofs
 Group:		Daemons
-Requires:	%{name} = %{epoch}:%{version}
+Requires:	%{name} = %{epoch}:%{version}-%{release}
 
 %description ldap
 This package contains the autofs module necessary to use automount
@@ -117,7 +118,7 @@ chmod a+w configure
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/{misc,net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
+install -d $RPM_BUILD_ROOT{/misc,/net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs,sysconfig}
 
 %{__make} install \
