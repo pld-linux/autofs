@@ -57,7 +57,7 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 LDFLAGS="-s"; export LDFLAGS
 %configure
  
-make 
+%{__make} 
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -65,7 +65,7 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/{misc,net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs,sysconfig}
 
-make install \
+%{__make} install \
 	INSTALLROOT=$RPM_BUILD_ROOT
 
 install %{SOURCE1}	$RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
