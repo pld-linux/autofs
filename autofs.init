@@ -50,6 +50,8 @@ if [ -f /etc/autofs/auto.master ]; then
 	while read dir map options; do
 		if [ ! -z "$dir" -a ! -z "$map" \
 		   -a x`echo "$map" | cut -c1` != 'x-' ]; then
+			maptype=`echo $map | cut -f1 -d:`
+			if [ "$maptype" = "$map" ]; then
 			map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
 			options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
 			if [ -x $map ]; then
@@ -58,6 +60,15 @@ if [ -f /etc/autofs/auto.master ]; then
 				echo "$DAEMON --timeout $TIMEOUT $dir file $map $options"
 			else
 				echo "$DAEMON --timeout $TIMEOUT $dir `basename $map` $options"
+			fi
+			else
+				map=`echo $map | cut -f2- -d:`
+				if [ ! -z "$map" ]; then
+					if [ "$maptype" = "file" ]; then
+						map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
+					fi
+					echo "$DAEMON --timeout $TIMEOUT $dir $maptype $map $options"
+				fi
 			fi
 		fi
 	done
@@ -111,7 +122,6 @@ case "$1" in
   stop)
 	if [ -f /var/lock/subsys/autofs ]; then
 		msg_stopping automounter
-#		automount -TERM
 		killproc automount
 		rm -f /var/lock/subsys/autofs >/dev/null 2>&1
 	else
