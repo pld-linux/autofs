@@ -30,6 +30,8 @@ Patch5:		%{name}-linux-2.3.patch
 Patch6:		%{name}-loop.patch
 Patch7:		%{name}-modules.patch
 Patch8:		%{name}-open_max.patch
+BuildRequires:	automake
+BuildRequires:	autoconf
 BuildRequires:	openldap-devel
 Requires:	mktemp
 Prereq:		rc-scripts
@@ -102,9 +104,10 @@ maps stored on an LDAP server.
 %patch8 -p1
 
 %build
-chmod 755 configure
+chmod a+w configure
+aclocal
 autoconf
-%configure2_13
+%configure
  
 %{__make} 
 
