@@ -83,7 +83,7 @@ Summary(es):	LDAP map support for the autofs package
 Summary(pl):	Modu³ LDAP dla autofs
 Summary(pt_BR):	Suporte a mapas LDAP para o pacote autofs
 Group:		Daemons
-Requires:	%{name} = %{version}
+Requires:	%{name} = %{epoch}:%{version}
 
 %description ldap
 This package contains the autofs module necessary to use automount
