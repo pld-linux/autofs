@@ -1,7 +1,9 @@
 Summary:	autofs daemon
 Summary(de):	autofs daemon 
+Summary(es):	Servidor autofs
 Summary(fr):	démon autofs
 Summary(pl):	Demon autofs 
+Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.0.0pre10
@@ -29,10 +31,9 @@ Patch6:		%{name}-loop.patch
 Patch7:		%{name}-modules.patch
 Patch8:		%{name}-open_max.patch
 BuildRequires:	openldap-devel
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-Prereq:		/sbin/chkconfig
 Requires:	mktemp
 Prereq:		rc-scripts
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sysconfdir	/etc/autofs
 
@@ -47,6 +48,11 @@ benutzt werden, und sie später bei Nichtbenutzung wieder demontiert.
 Dies kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches
 einschließen.
 
+%description -l es
+autofs es un servidor que monta automáticamente sistemas de archivos
+cuando los usa, y los desmonta, más tarde, al terminar de usarlos.
+Incluyendo sistemas de archivo en red, CD-ROMS, disquetes, etc.
+
 %description -l fr
 autofs est un démon qui monte automatiquement les systèmes de fichiers
 lorsqu'on les utilise et les démonte lorsqu'on ne les utilise plus.
@@ -58,6 +64,12 @@ Autofs jest demonem, który montuje automatycznie systemy plików je¿eli
 je u¿ywasz i odmontowuje pó¼niej, je¿eli ich nie u¿ywasz. Mo¿e
 montowaæ sieciowy system plików, CD-romy, stacje dyskietek i inne.
 
+%description -l pt_BR
+O autofs é um servidor que monta automaticamente sistemas de arquivos
+quando estes forem usados, desmontando-os mais tarde quando não
+estiverem mais em uso. Incluindo sistemas de arquivo em rede, CD-ROMS,
+disquetes, etc.
+
 %description -l tr
 autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden
 baðlar ve kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem,
@@ -65,7 +77,9 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
 %package ldap
 Summary:	LDAP lookup module for autofs
+Summary(es):	LDAP map support for the autofs package
 Summary(pl):	Modu³ LDAP dla autofs
+Summary(pt_BR):	Suporte a mapas LDAP para o pacote autofs
 Group:		Daemons
 Group(de):	Server
 Group(pl):	Serwery
@@ -96,7 +110,6 @@ autoconf
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
 install -d $RPM_BUILD_ROOT/{misc,net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs,sysconfig}
 
