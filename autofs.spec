@@ -106,7 +106,7 @@ trzymanych na serwerze LDAP.
 
 %build
 chmod a+w configure
-aclocal
+%{__aclocal}
 %{__autoconf}
 %configure
 
