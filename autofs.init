@@ -113,7 +113,7 @@ case "$1" in
   stop)
 	show Stopping automounter
 	busy
-        kill -TERM $(/sbin/pidof /usr/sbin/automount)
+	killproc automount -TERM
 	rm -f /var/lock/subsys/automount
 	deltext
 	ok
