@@ -6,30 +6,27 @@ Summary(pl):	Demon autofs
 Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
-Version:	4.0.0pre10
-Release:	8
+Version:	4.1.3
+Release:	1
 Epoch:		1
 License:	GPL
 Group:		Daemons
-Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/testing-v4/%{name}-%{version}.tar.bz2
-# Source0-md5:	45df38e9458bde07315a1bfce099b84a
+Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}.tar.bz2
+# Source0-md5:	f43a09e94c4bd512ec58ac06e9d42c60
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.misc
 Source4:	%{name}-auto.mnt
 Source5:	%{name}-auto.net
 Source6:	%{name}.sysconfig
-Patch0:		%{name}-clean.patch
-Patch1:		%{name}-doc.patch
-Patch2:		%{name}-hesiod-bind.patch
-# Needed to check !!
-Patch3:		%{name}-initialize.patch
-Patch4:		%{name}-man.patch
-Patch5:		%{name}-linux-2.3.patch
-Patch6:		%{name}-loop.patch
-Patch7:		%{name}-modules.patch
-Patch8:		%{name}-open_max.patch
-Patch9:		%{name}-hesiod-includes.patch
+Patch0:		%{name}-open_max.patch
+Patch1:		%{name}-hesiod-includes.patch
+Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-bad_chdir.patch
+Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-mtab_lock.patch
+Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-non_block_ping.patch
+Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-signal-race-fix.patch
+Patch6:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-sock-leak-fix.patch
+Patch7:		http://www.kernel.org/pub/linux/daemons/autofs/v4/autofs-4.1.3-strict.patch
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	bind-devel
@@ -100,13 +97,11 @@ trzymanych na serwerze LDAP.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
-#%patch3 -p1
+%patch3 -p1
 %patch4 -p1
-#%patch5 -p1
+%patch5 -p1
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
-%patch9 -p1
 
 %build
 chmod a+w configure
@@ -159,7 +154,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc NEWS README
+%doc README* CHANGELOG
 
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
