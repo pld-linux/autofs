@@ -1,0 +1,124 @@
+--- autofs-4.0.0pre7/daemon/mount.c	Tue Aug  1 14:01:36 2000
++++ autofs-4.0.0pre7/daemon/mount.c	Tue Aug  1 14:01:41 2000
+@@ -21,6 +21,7 @@
+ 
+ #include <syslog.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include "automount.h"
+ 
+ /* These filesystems are known not to work with the "generic" module */
+--- autofs-4.0.0pre7/modules/parse_sun.c	Tue Aug  1 14:03:36 2000
++++ autofs-4.0.0pre7/modules/parse_sun.c	Tue Aug  1 14:09:33 2000
+@@ -16,6 +16,7 @@
+ 
+ #include <stdio.h>
+ #include <malloc.h>
++#include <alloca.h>
+ #include <errno.h>
+ #include <netdb.h>
+ #include <fcntl.h>
+@@ -378,7 +379,7 @@
+   }
+ }
+ 
+-static const char *dequote(const char *str, int strlen)
++static char *dequote(const char *str, int strlen)
+ {
+   char *ret = malloc(strlen+1);
+   char *cp = ret;
+@@ -415,7 +416,7 @@
+   return cp + len;
+ }
+ 
+-static const char *concat_options(const char *left, char *right)
++static char *concat_options(char *left, char *right)
+ {
+   char *ret;
+ 
+@@ -531,7 +532,8 @@
+ {
+   struct parse_context *ctxt = (struct parse_context *) context;
+   char *pmapent;
+-  const char *p, *options;
++  const char *p;
++  char *options;
+   int mapent_len, rv;
+   int optlen;
+ 
+@@ -577,7 +579,7 @@
+     /* It's a multi-mount; deal with it */
+     do {
+       char *myoptions = strdup(options);
+-      const char *path, *loc;
++      char *path, *loc;
+       int pathlen, loclen;
+ 
+       if (myoptions == NULL) {
+@@ -641,7 +643,7 @@
+     return rv;
+   } else {
+     /* Normal (non-multi) entries */
+-    const char *loc;
++    char *loc;
+     int loclen;
+ 
+     if ( *p == ':' ) p++;	/* Sun escape for entries starting with / */
+--- autofs-4.0.0pre7/modules/mount_nfs.c	Tue Aug  1 14:09:40 2000
++++ autofs-4.0.0pre7/modules/mount_nfs.c	Tue Aug  1 14:10:49 2000
+@@ -17,6 +17,7 @@
+ 
+ #include <stdio.h>
+ #include <malloc.h>
++#include <alloca.h>
+ #include <errno.h>
+ #include <netdb.h>
+ #include <fcntl.h>
+@@ -201,7 +202,7 @@
+     /* Local host -- do a symlink */
+ 
+     /* Chomp trailing '/'s */
+-    cp = name+strlen(name);
++    cp = (char*) name+strlen(name);
+     while(cp[-1] == '/')
+ 	    cp--;
+     *cp = '\0';
+--- autofs-4.0.0pre7/modules/mount_generic.c	Tue Aug  1 14:11:04 2000
++++ autofs-4.0.0pre7/modules/mount_generic.c	Tue Aug  1 14:11:13 2000
+@@ -16,6 +16,7 @@
+ 
+ #include <stdio.h>
+ #include <malloc.h>
++#include <alloca.h>
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <unistd.h>
+--- autofs-4.0.0pre7/modules/mount_ext2.c	Tue Aug  1 14:02:41 2000
++++ autofs-4.0.0pre7/modules/mount_ext2.c	Tue Aug  1 14:02:56 2000
+@@ -16,4 +16,5 @@ 
+ #include <stdio.h>
+ #include <malloc.h>
++#include <alloca.h>
+ #include <errno.h>
+ #include <fcntl.h>
+--- autofs-4.0.0pre7/Makefile.rules	Tue Aug  1 14:15:37 2000
++++ autofs-4.0.0pre7/Makefile.rules	Tue Aug  1 14:16:29 2000
+@@ -15,13 +15,13 @@
+ # The STRIP defined here *must not* remove any dynamic-loading symbols
+ 
+ ifdef DEBUG
+-CFLAGS    = -O2 -g -DDEBUG
+-LDFLAGS   = -g
++CFLAGS    = $(RPM_OPT_FLAGS) -ggdb
++LDFLAGS   = -ggdb
+ STRIP     = :
+ else
+-CFLAGS    = -O3 -fomit-frame-pointer -Wall
+-LDFLAGS   = -s
+-STRIP     = strip --strip-debug
++CFLAGS    = $(RPM_OPT_FLAGS)
++LDFLAGS   =
++STRIP     = :
+ endif
+ 
+ CC        = gcc

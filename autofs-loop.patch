@@ -1,0 +1,16 @@
+--- autofs-3.1.4/modules/mount_autofs.c	Fri Jan 21 18:05:29 2000
++++ autofs-3.1.4/modules/mount_autofs.c	Fri Jan 21 18:07:07 2000
+@@ -72,11 +72,11 @@
+ 
+   argc = 5;
+   if ( options ) {
+-    char *p = options;
++    char *p = options - 1;
+     do {
+       argc++;
+       if ( *p == ',' ) p++;
+-    } while ((p = strchr(p,',')) != NULL);
++    } while ((p = strchr(p + 1,',')) != NULL);
+   }
+   argv = (char **) alloca((argc+1) * sizeof(char *));
+ 

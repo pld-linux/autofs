@@ -1,0 +1,87 @@
+diff -uNr autofs-4.0.0pre7/man/auto.master.5 autofs-4.0.0pre7-redhat/man/auto.master.5
+--- autofs-4.0.0pre7/man/auto.master.5	Tue Apr 18 05:54:44 2000
++++ autofs-4.0.0pre7-redhat/man/auto.master.5	Wed Apr 26 14:41:26 2000
+@@ -31,9 +31,14 @@
+ The file has three fields separated by an arbitrary number of blanks or
+ tabs. Lines beginning with # are comments. The first field is the mount
+ point. Second field is the map file to be consulted for this mount-point.
+-The third field is optional and can contain options to be applied to all
+-entries in the map. Options are cumulative, which is a difference to the
+-behavior of the SunOS automounter.
++This field is of the form 
++.IR maptype:mapname ,
++where
++.I maptype
++is one of the supported map types (file, program, yp, nisplus, hesiod, userdir, ldap), and
++.I mapname
++is the name of the map. The third field is optional and can contain options to+ be applied to all entries in the map. Options are cumulative, which is a
++difference from the behavior of the SunOS automounter.
+ 
+ The format of the map file and the options are described in
+ .BR autofs (5).
+@@ -44,21 +49,27 @@
+ .nf
+ /home	/etc/auto.home
+ /misc	/etc/auto.misc
++/mnt	yp:mnt.map
+ .fi
+ .RE
+ .sp
+-This will generate two mountpoints 
+-.I /home
++This will generate three mountpoints 
++.IR /home ,
++.IR /misc ,
+ and
+-.IR /misc .
++.IR /mnt .
+ All accesses to
+ .I /home
+ will lead to the consultation of the map in
+ .IR /etc/auto.home ,
+-and all accesses to
++all accesses to
+ .I /misc
+ will consult the map in
+-.IR /etc/auto.misc .
++.IR /etc/auto.misc ,
++and all accesses to
++.I /mnt
++will consult the NIS map
++.IR mnt.map .
+ .SH "SEE ALSO"
+ .BR automount (8),
+ .BR autofs (5),
+diff -uNr autofs-4.0.0pre7/samples/auto.master autofs-4.0.0pre7-redhat/samples/auto.master
+--- autofs-4.0.0pre7/samples/auto.master	Tue Apr 18 05:54:44 2000
++++ autofs-4.0.0pre7-redhat/samples/auto.master	Wed Apr 26 14:42:27 2000
+@@ -3,5 +3,5 @@
+ # Format of this file:
+ # mountpoint map options
+ # For details of the format look at autofs(8).
+-/misc	/etc/auto.misc
+-/net	/etc/auto.net
++/misc	/etc/auto.misc	--timeout=60
++/net	/etc/auto.net	--timeout=60
+diff -uNr autofs-4.0.0pre7/samples/auto.misc autofs-4.0.0pre7-redhat/samples/auto.misc
+--- autofs-4.0.0pre7/samples/auto.misc	Tue Apr 18 05:54:44 2000
++++ autofs-4.0.0pre7-redhat/samples/auto.misc	Wed Apr 26 14:41:26 2000
+@@ -3,8 +3,13 @@
+ # key [ -mount-options-separated-by-comma ] location
+ # Details may be found in the autofs(5) manpage
+ 
+-kernel		-ro			ftp.kernel.org:/pub/linux
+-boot		-fstype=ext2		:/dev/hda1
+-removable	-fstype=ext2		:/dev/hdd
+-cd		-fstype=iso9660,ro	:/dev/hdc
+-floppy		-fstype=auto		:/dev/fd0
++kernel		-ro,soft,intr		ftp.kernel.org:/pub/linux
++cd		-fstype=iso9660,ro,nosuid,nodev	:/dev/cdrom
++
++# the following entries are samples to pique your imagination
++#boot		-fstype=ext2		:/dev/hda1
++#floppy		-fstype=auto		:/dev/fd0
++#floppy		-fstype=ext2		:/dev/fd0
++#e2floppy	-fstype=ext2		:/dev/fd0
++#jaz		-fstype=ext2		:/dev/sdc1
++#removable	-fstype=ext2		:/dev/hdd
