@@ -15,6 +15,7 @@ Patch:		autofs.patch
 Buildroot:	/tmp/%{name}-%{version}-root
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
+Requires:	rc-scripts
 
 %define		_sysconfdir	/etc/autofs
 
