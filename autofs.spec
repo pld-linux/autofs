@@ -61,7 +61,7 @@ install -d $RPM_BUILD_ROOT/{misc,usr/{sbin,lib/autofs,man/{man5,man8}}} \
 
 make install \
 	sbindir=$RPM_BUILD_ROOT/usr/sbin \
-	mandir=$RPM_BUILD_ROOT/usr/man \
+	mandir=$RPM_BUILD_ROOT%{_mandir} \
 	autofslibdir=$RPM_BUILD_ROOT/usr/lib/autofs
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
@@ -71,7 +71,7 @@ touch $RPM_BUILD_ROOT/etc/autofs/auto.{home,misc,var,tmp}
 
 strip --strip-unneeded $RPM_BUILD_ROOT/usr/lib/autofs/*
 
-gzip -9nf $RPM_BUILD_ROOT/usr/man/man[58]/* \
+gzip -9nf $RPM_BUILD_ROOT%{_mandir}/man[58]/* \
 	NEWS README 
 
 %post -n autofs
@@ -105,7 +105,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir /usr/lib/autofs
 
 %attr(755,root,root) /usr/lib/autofs/*
-/usr/man/man[58]/*
+%{_mandir}/man[58]/*
 
 %changelog
 * Tue Apr 20 1999 Piotr Czerwiñski <pius@pld.org.pl>
