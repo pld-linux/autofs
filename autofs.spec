@@ -47,7 +47,7 @@ sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
 %build
 CFLAGS="$RPM_OPT_FLAGS" LDFLAGS="-s" \
-./configure %{_target} \
+./configure %{_target_platform} \
 	--prefix=/usr \
 	--sysconfdir=/etc/autofs
  
