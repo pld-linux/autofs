@@ -35,6 +35,7 @@ BuildRequires:	autoconf
 BuildRequires:	openldap-devel
 Requires:	mktemp
 Prereq:		rc-scripts
+Prereq:		/sbin/chkconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sysconfdir	/etc/autofs
@@ -91,6 +92,10 @@ Requires:	%{name} = %{version}
 This package contains the autofs module necessary to use automount
 maps stored on an LDAP server.
 
+%description ldap -l pl
+Ten pakiet zawiera modu³ autofs potrzebny do u¿ywania map automounta
+trzymanych na serwerze LDAP.
+
 %prep
 %setup -q
 %patch0 -p1
@@ -131,6 +136,9 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 
 gzip -9nf NEWS README 
 
+%clean
+rm -rf $RPM_BUILD_ROOT
+
 %post
 /sbin/chkconfig --add autofs
 # triggerpostun would get called after %post
@@ -150,9 +158,6 @@ if [ "$1" = "0" ]; then
 		/etc/rc.d/init.d/autofs stop 1>&2
 	fi
 fi
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
