@@ -6,7 +6,7 @@ Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.0.0pre6
 Release:	1
-Copyright:	GPL
+License:	GPL
 Group:		Daemons
 Group(pl):	Serwery
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/%{name}-%{version}.tar.gz
@@ -29,9 +29,9 @@ them, and unmounts them later when you are not using them.  This can
 include network filesystems, CD-ROMs, floppies, and so forth.
 
 %description -l de
-autofs ist ein Dämon, der Dateisysteme automatisch montiert, wenn sie 
-benutzt werden, und sie später bei Nichtbenutzung wieder demontiert. 
-Dies kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches einschließen. 
+autofs ist ein Dämon, der Dateisysteme automatisch montiert, wenn sie
+benutzt werden, und sie später bei Nichtbenutzung wieder demontiert.  Dies
+kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches einschließen.
 
 %description -l fr
 autofs est un démon qui monte automatiquement les systèmes de fichiers
@@ -39,13 +39,13 @@ lorsqu'on les utilise et les démonte lorsqu'on ne les utilise plus. Cela
 inclus les systèmes de fichiers réseau, les CD-ROMs, les disquettes, etc.
 
 %description -l pl
-Autofs jest demonem, który montuje automatycznie systemy plików je¿eli
-je u¿ywasz i odmontowuje pó¼niej, je¿eli ich nie u¿ywasz. Mo¿e montowaæ
+Autofs jest demonem, który montuje automatycznie systemy plików je¿eli je
+u¿ywasz i odmontowuje pó¼niej, je¿eli ich nie u¿ywasz. Mo¿e montowaæ
 sieciowy system plików, CD-romy, stacje dyskietek i inne.
 
 %description -l tr
-autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden baðlar
-ve kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem, að dosya
+autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden baðlar ve
+kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem, að dosya
 sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
 %prep
@@ -68,13 +68,13 @@ make install \
 
 install %{SOURCE1}	$RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
 
-install %{SOURCE2}	$RPM_BUILD_ROOT/etc/autofs/auto.master
-install %{SOURCE3}	$RPM_BUILD_ROOT/etc/autofs/auto.misc
-install %{SOURCE4}	$RPM_BUILD_ROOT/etc/autofs/auto.mnt
-install %{SOURCE5} 	$RPM_BUILD_ROOT/etc/autofs/auto.net
+install %{SOURCE2}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.master
+install %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.misc
+install %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.mnt
+install %{SOURCE5} 	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
 install %{SOURCE6} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
-touch			$RPM_BUILD_ROOT/etc/autofs/auto.{home,misc,var,tmp}
+touch			$RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 
 strip --strip-unneeded	$RPM_BUILD_ROOT%{_libdir}/autofs/*
 
