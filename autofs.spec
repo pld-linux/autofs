@@ -11,8 +11,6 @@ Release:	4
 Epoch:		1
 License:	GPL
 Group:		Daemons
-Group(de):	Server
-Group(pl):	Serwery
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/testing-v4/%{name}-%{version}.tar.bz2
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
@@ -84,8 +82,6 @@ Summary(es):	LDAP map support for the autofs package
 Summary(pl):	Modu³ LDAP dla autofs
 Summary(pt_BR):	Suporte a mapas LDAP para o pacote autofs
 Group:		Daemons
-Group(de):	Server
-Group(pl):	Serwery
 Requires:	%{name} = %{version}
 
 %description ldap
