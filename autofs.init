@@ -20,14 +20,15 @@
 . /etc/sysconfig/network
 
 # Demon specified configuration.
-. /etc/sysconfig/autofs
+[ -f /etc/sysconfig/autofs ] && . /etc/sysconfig/autofs
 
 # Check that networking is up.
-if [ "${NETWORKING}" = "no" ]; then
-	echo "WARNING: Networking is down. Autofs service can't be runed."
-	exit 1
+if is_no "${NETWORKING}"; then
+        # nls "ERROR: Networking is down. %s can't be run." <service>
+        msg_Network_Down automounter
+        exit 1
 fi
-
+			
 DAEMON=/usr/sbin/automount
 
 #
@@ -95,28 +96,31 @@ case "$1" in
   start)
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/automount ]; then
-		show Starting automounter
+                msg_starting automounter
 		busy
 		if getmounts | sh; then
 		    deltext;ok
 		else
 		    deltext;ok
 		fi
+                RETVAL=$?
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/automount
 	else
-	    echo "automount already is running"
-	fi
-	touch /var/lock/subsys/automount
-	;;
-  stop)
-	show Stopping automounter
-	killproc automount -TERM
-	rm -f /var/lock/subsys/automount
-	;;
-  restart|reload)
-	if [ ! -f /var/lock/subsys/automount ]; then
-		echo "Automounter not running"
+                msg_Already_Running automounter
 		exit 1
 	fi
+	;;
+  stop)
+        if [ -f /var/lock/subsys/automount ]; then
+                msg_stopping automount -TERM
+                killproc automount
+                rm -f /var/lock/subsys/automount >/dev/null 2>&1
+        else
+                msg_Not_Running automounter
+                exit 1
+        fi
+	;;
+  restart)
 	$0 stop
 	$0 start
 	;;
@@ -130,8 +134,8 @@ case "$1" in
 	)
 	;;
   *)
-	echo "Usage: $0 {start|stop|restart|reload|status}"
+	msg_Usage: "$0 {start|stop|restart|status}"
 	exit 1
 esac
 
-exit 0
+exit $RETVAL
