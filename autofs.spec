@@ -29,6 +29,7 @@ Patch5:		%{name}-linux-2.3.patch
 Patch6:		%{name}-loop.patch
 Patch7:		%{name}-modules.patch
 Patch8:		%{name}-open_max.patch
+Patch9:		%{name}-hesiod-includes.patch
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	openldap-devel
@@ -104,6 +105,7 @@ trzymanych na serwerze LDAP.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 
 %build
 chmod a+w configure
