@@ -8,6 +8,7 @@ Version:	4.0.0pre10
 Release:	1
 License:	GPL
 Group:		Daemons
+Group(de):	Server
 Group(pl):	Serwery
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/testing-v4/%{name}-%{version}.tar.bz2
 Source1:	%{name}.init
