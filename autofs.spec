@@ -76,7 +76,7 @@ gzip -9nf $RPM_BUILD_ROOT%{_mandir}/man[58]/* \
 
 %post
 /sbin/chkconfig --add autofs
-if test -r /var/run/autofs.pid; then
+if test -r /var/lock/subsys/automount; then
 	/etc/rc.d/init.d/autofs restart 1>&2
 else
 	echo "Run \"/etc/rc.d/init.d/autofs start\" to start autofs daemon."
@@ -85,7 +85,7 @@ fi
 %preun
 if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del autofs
-	if [ -f /var/lock/subsys/autofs ]; then
+	if [ -f /var/lock/subsys/automount ]; then
 		/etc/rc.d/init.d/autofs stop 1>&2
 	fi
 fi
