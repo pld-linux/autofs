@@ -50,7 +50,7 @@ Dies kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches
 einschließen.
 
 %description -l es
-autofs es un servidor que monta automáticamente sistemas de archivos
+Autofs es un servidor que monta automáticamente sistemas de archivos
 cuando los usa, y los desmonta, más tarde, al terminar de usarlos.
 Incluyendo sistemas de archivo en red, CD-ROMS, disquetes, etc.
 
@@ -78,7 +78,6 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 
 %package ldap
 Summary:	LDAP lookup module for autofs
-Summary(es):	LDAP map support for the autofs package
 Summary(pl):	Modu³ LDAP dla autofs
 Summary(pt_BR):	Suporte a mapas LDAP para o pacote autofs
 Group:		Daemons
