@@ -75,6 +75,7 @@ að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 %patch8 -p1
 
 %build
+autoconf
 %configure2_13
  
 %{__make} 
