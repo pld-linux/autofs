@@ -50,7 +50,7 @@ CFLAGS="$RPM_OPT_FLAGS" LDFLAGS="-s" \
 ./configure \
 	--prefix=/usr \
 	--sysconfdir=/etc/autofs
-
+ 
 make 
 
 %install
@@ -102,12 +102,16 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) /usr/sbin/automount
 
 %dir /misc
-
 %dir /usr/lib/autofs
+
 %attr(755,root,root) /usr/lib/autofs/*
 /usr/man/man[58]/*
 
 %changelog
+* Tue Apr 20 1999 Piotr Czerwiñski <pius@pld.org.pl>
+  [3.1.3-4]
+- recompiled on rpm 3.
+
 * Tue Apr  6 1999 Tomasz K³oczko <kloczek@rudy.mif.pg.gda.pl>
   [3.1.3-3]
 - stripping autofs modules,
