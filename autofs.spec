@@ -5,7 +5,8 @@ Summary(pl):	Demon autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.0.0pre10
-Release:	2
+Release:	3
+Epoch:		1
 License:	GPL
 Group:		Daemons
 Group(de):	Server
