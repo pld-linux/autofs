@@ -1,29 +1,31 @@
 #!/bin/sh
 #
-#       $Id$
+# autofs	automatically mounts filesystems when you use them,
+#		and unmounts them later when you are not using them.
 #
-#	/etc/rc.d/init.d/autofs
+# chkconfig:	2345 72 08
 #
-#	rc file for automount using a Sun-style "master map".
-#	We first look for a local /etc/autofs/auto.master, then a YP
-#	map with that name
+# description:	Script for automount using a Sun-style "master map".
+#		We first look for a local /etc/autofs/auto.master, then a YP
+#		map with that name
 #
-# chkconfig: 2345 72 08
-# description: automatically mounts filesystems when you use \
-#   them, and unmounts them later when you are not using them.
-# processname: automount
-#   Note that there may be multiple processes names automount
-# config: /etc/autofs/auto.master
-#   Note that all other config files are automatically reloaded
-#   and may be different on different systems; we can ignore them
-#   here
+# processname:	automount
+# config:	/etc/autofs/auto.master
 
-# Source function library.
+
+# Source function library
 . /etc/rc.d/init.d/functions
 
-[ -f /usr/sbin/automount ] || exit 0
+# Get network config
+. /etc/sysconfig/network
 
-#
+# Get service config
+[ -f /etc/sysconfig/inetd ] && . /etc/sysconfig/inetd
+
+# Check that networking is up.
+[ "${NETWORKING}" = "no" ] && echo "Error: Networking is down"; exit 0
+
+
 # 	We can add local options here
 #	e.g. localoptions='rsize=8192,wsize=8192'
 #
@@ -100,17 +102,17 @@ fi
 #
 case "$1" in
   start)
-	# Check if the automounter is already running?
+	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/automount ]; then
-	    show Starting automounter
-	    busy
-	    getmounts | sh
-	    touch /var/lock/subsys/automount
-	    deltext
-	    ok
+		show Starting automounter
+		busy
+		getmounts | sh
+		deltext
+		ok
 	else
-	    echo "Automounter already is running"
+	    echo "automount already is running"
 	fi
+	touch /var/lock/subsys/automount
 	;;
   stop)
 	show Stopping automounter
