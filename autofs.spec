@@ -5,7 +5,7 @@ Summary(pl):	Demon autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	3.1.3
-Release:	5
+Release:	6
 Copyright:	GPL
 Group:		Daemons
 Group(pl):	Serwery
