@@ -16,7 +16,7 @@ Source3:	autofs-auto.misc
 Source4:	autofs-auto.mnt
 Source5:	autofs-auto.net
 Source6:	autofs.sysconfig
-Buildroot:	/tmp/%{name}-%{version}-root
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Prereq:		/sbin/chkconfig
 Requires:	mktemp
 Requires:	rc-scripts
