@@ -1,0 +1,161 @@
+#!/bin/bash
+#
+#       $Id$
+#
+#	/etc/rc.d/init.d/autofs
+#
+#	rc file for automount using a Sun-style "master map".
+#	We first look for a local /etc/auto.master, then a YP
+#	map with that name
+#
+# chkconfig: - 72 08
+# description: automatically mounts filesystems when you use \
+#   them, and unmounts them later when you are not using them.
+# processname: automount
+#   Note that there may be multiple processes names automount
+# config: /etc/auto.master
+#   Note that all other config files are automatically reloaded
+#   and may be different on different systems; we can ignore them
+#   here
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+[ -f /usr/sbin/automount ] || exit 0
+
+#
+# 	We can add local options here
+#	e.g. localoptions='rsize=8192,wsize=8192'
+#
+localoptions=''
+
+#
+#	This function will build a list of automount commands to execute in
+#	order #	to activate all the mount points. It is used to figure out
+#	the difference of automount points in case of a reload
+#
+function getmounts()
+{
+#
+#	Check for local maps to be loaded
+#
+if [ -f /etc/autofs/auto.master ]
+then
+    cat /etc/autofs/auto.master | sed -e '/^#/d' -e '/^$/d'| (
+	while read dir map options
+	do
+	    if [ ! -z "$dir" -a ! -z "$map" \
+			-a x`echo "$map" | cut -c1` != 'x-' ]
+	    then
+		map=`echo "/etc/autofs/$map" | sed -e 's:^/etc/autofs/:/:'`
+ 		# special: treat -t or --timeout (or any reasonable derivative)
+ 		# specially, since it can't be made a normal mount option.
+ 		if echo $options | grep -- '-t' >/dev/null 2>&1 ; then
+ 		    mountoptions="--timeout $(echo $options | \
+ 		      sed 's/^.*-t\(imeout\)*[ \t]*\([0-9][0-9]*\).*$/\2/g')"
+ 		fi
+ 		options=`echo "$options" | sed -e '
+ 		  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
+ 		  s/\(^\|[ \t]\)-/\1/g'`
+		if [ -x $map ]; then
+		    echo "/usr/sbin/automount $mountoptions $dir program $map $options $localoptions"
+		elif [ -f $map ]; then
+		    echo "/usr/sbin/automount $mountoptions $dir file $map $options $localoptions"
+		else
+		    echo "/usr/sbin/automount $mountoptions $dir `basename $map` $options $localoptions"
+		fi
+	    fi
+	done
+    )
+fi
+
+#
+#	Check for YellowPage maps to be loaded
+#
+if [ -e /usr/bin/ypcat ] && [ `ypcat -k auto.master 2>/dev/null | wc -l` -gt 0 ]
+then
+    ypcat -k auto.master | (
+	while read dir map options
+	do
+	    if [ ! -z "$dir" -a ! -z "$map" \
+			-a x`echo "$map" | cut -c1` != 'x-' ]
+	    then
+		map=`echo "$map" | sed -e 's/^auto_/auto./'`
+		if echo $options | grep -- '-t' >/dev/null 2>&1 ; then
+		    mountoptions="--timeout $(echo $options | \
+		      sed 's/^.*-t\(imeout\)*[ \t]*\([0-9][0-9]*\).*$/\2/g')"
+		fi
+		options=`echo "$options" | sed -e '
+		  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
+		  s/\(^\|[ \t]\)-/\1/g'`
+		echo "/usr/sbin/automount $mountoptions $dir yp $map $options $localoptions"
+	    fi
+	done
+    )
+fi
+}
+
+#
+#	See how we were called.
+#
+case "$1" in
+  start)
+	# Check if the automounter is already running?
+	if [ ! -f /var/lock/subsys/automount ]; then
+	    show Starting automounter
+	    busy
+	    getmounts | sh
+	    touch /var/lock/subsys/automount
+	    deltext
+	    ok
+	fi
+	;;
+  stop)
+	show Stopping automounter
+	busy
+        kill -TERM $(/sbin/pidof /usr/sbin/automount)
+	rm -f /var/lock/subsys/automount
+	deltext
+	ok
+	;;
+  reload|restart)
+	if [ ! -f /var/lock/subsys/automount ]; then
+		echo "Automounter not running"
+		exit 1
+	fi
+	echo "Checking for changes to /etc/auto.master ...."
+	TMP1=`mktemp /tmp/autofs.XXXXXX` || { echo "could not make temp file" >&2; exit 1; }
+	TMP2=`mktemp /tmp/autofs.XXXXXX` || { echo "could not make temp file" >&2; exit 1; }
+	getmounts >$TMP1
+	ps ax|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
+	    while read pid tt stat time command; do
+		echo "$command" >>$TMP2
+		if ! grep -q "^$command" $TMP2; then
+			kill -USR2 $pid
+			echo "Stop $command"
+		fi
+	    done
+	)
+	cat $TMP1 | ( while read x; do
+		if ! grep -q "^$x" $TMP2; then
+			$x
+			echo "Start $x"
+		fi
+        done )
+	rm -f $TMP1 $TMP2
+	;;
+  status)
+	echo "Configured Mount Points:"
+	getmounts
+	echo ""
+	echo "Active Mount Points:"
+	ps ax|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
+		while read pid tt stat time command; do echo $command; done
+	)
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|reload|status}"
+	exit 1
+esac
+
+exit 0
