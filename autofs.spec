@@ -48,7 +48,7 @@ sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
 %build
 CFLAGS="$RPM_OPT_FLAGS" LDFLAGS="-s" \
 ./configure %{_target_platform} \
-	--prefix=/usr \
+	--prefix=%{_prefix} \
 	--sysconfdir=/etc/autofs
  
 make 
@@ -56,7 +56,7 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 
-install -d $RPM_BUILD_ROOT/{misc,usr/{sbin,lib/autofs,man/{man5,man8}}} \
+install -d $RPM_BUILD_ROOT/{misc,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs}
 
 make install \
