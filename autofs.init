@@ -111,7 +111,7 @@ case "$1" in
   stop)
 	if [ -f /var/lock/subsys/autofs ]; then
 		msg_stopping automounter
-		automount -TERM
+#		automount -TERM
 		killproc automount
 		rm -f /var/lock/subsys/autofs >/dev/null 2>&1
 	else
