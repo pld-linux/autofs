@@ -100,10 +100,10 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 gzip -9nf NEWS README 
 
 %post
-DESC="autofs daemon"; %chkconfig_post
+DESC="autofs daemon"; %chkconfig_add
 	
 %preun
-%chkconfig_preun
+%chkconfig_del
 
 %clean
 rm -rf $RPM_BUILD_ROOT
