@@ -60,7 +60,7 @@ install -d $RPM_BUILD_ROOT/{misc,usr/{sbin,lib/autofs,man/{man5,man8}}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs}
 
 make install \
-	sbindir=$RPM_BUILD_ROOT/usr/sbin \
+	sbindir=$RPM_BUILD_ROOT%{_sbindir} \
 	mandir=$RPM_BUILD_ROOT%{_mandir} \
 	autofslibdir=$RPM_BUILD_ROOT%{_libdir}/autofs
 
@@ -99,7 +99,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir /etc/autofs
 %attr(644,root,root) %config %verify(not size mtime md5) /etc/autofs/*
-%attr(755,root,root) /usr/sbin/automount
+%attr(755,root,root) %{_sbindir}/automount
 
 %dir /misc
 %dir %{_libdir}/autofs
