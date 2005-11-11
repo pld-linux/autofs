@@ -1,3 +1,9 @@
+# TODO:
+# What about unpacked files:
+#  /etc/auto.master
+#  /etc/auto.misc
+#  /etc/auto.net
+# Probably Source{2,3,5} are obsolete.
 Summary:	autofs daemon
 Summary(de):	autofs daemon
 Summary(es):	Servidor autofs
@@ -6,13 +12,13 @@ Summary(pl):	Demon autofs
 Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
-Version:	4.1.3
-Release:	2
+Version:	4.1.4
+Release:	1
 Epoch:		1
 License:	GPL
 Group:		Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}.tar.bz2
-# Source0-md5:	f43a09e94c4bd512ec58ac06e9d42c60
+# Source0-md5:	7e3949114c00665b4636f0c318179657
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.misc
@@ -21,12 +27,10 @@ Source5:	%{name}-auto.net
 Source6:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-hesiod-includes.patch
-Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-bad_chdir.patch
-Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-mtab_lock.patch
-Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-non_block_ping.patch
-Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-signal-race-fix.patch
-Patch6:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-sock-leak-fix.patch
-Patch7:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.3-strict.patch
+Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}-misc-fixes.patch
+Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}-multi-parse-fix.patch   
+Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}-no-unlink-upstream.patch
+Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}-non-replicated-ping.patch 
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	bind-devel
@@ -99,8 +103,6 @@ trzymanych na serwerze LDAP.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
-%patch7 -p1
 
 %build
 chmod a+w configure
@@ -125,6 +127,7 @@ install %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.misc
 install %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.mnt
 install %{SOURCE5} 	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
 install %{SOURCE6} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
+mv $RPM_BUILD_ROOT/etc/auto.smb $RPM_BUILD_ROOT%{_sysconfdir}
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
 
@@ -163,6 +166,7 @@ fi
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.misc
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.mnt
 %attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.net
+%attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.smb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.tmp
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.var
 %attr(755,root,root) %{_sbindir}/automount
