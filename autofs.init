@@ -31,7 +31,7 @@ if is_yes "${NETWORKING}"; then
 else
 	exit 0
 fi
-			
+
 DAEMON=/usr/sbin/automount
 
 #
@@ -77,7 +77,7 @@ fi
 #
 # Check for YellowPage maps to be loaded
 #
-if is_yes $USE_YP; then 
+if is_yes $USE_YP; then
 	if [ -e /usr/bin/ypcat ] && \
 	   [ `ypcat -k auto.master 2>/dev/null | wc -l` -gt 0 ]; then
 		ypcat -k auto.master | (
@@ -110,7 +110,7 @@ case "$1" in
 	if [ ! -f /var/lock/subsys/autofs ]; then
 		msg_starting automounter
 		busy
-		getmounts | sh 
+		getmounts | sh
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && ok || fail
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/autofs
