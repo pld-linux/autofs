@@ -27,10 +27,10 @@ Source5:	%{name}-auto.net
 Source6:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-hesiod-includes.patch
-Patch2:		%{name}-4.1.4-misc-fixes.patch
-Patch3:		%{name}-4.1.4-multi-parse-fix.patch   
-Patch4:		%{name}-4.1.4-no-unlink-upstream.patch
-Patch5:		%{name}-4.1.4-non-replicated-ping.patch 
+Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-misc-fixes.patch
+Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-multi-parse-fix.patch   
+Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-no-unlink-upstream.patch
+Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-non-replicated-ping.patch 
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	bind-devel
