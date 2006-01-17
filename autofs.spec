@@ -13,7 +13,7 @@ Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.1.4
-Release:	1
+Release:	2
 Epoch:		1
 License:	GPL
 Group:		Daemons
@@ -34,7 +34,7 @@ Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}-no
 BuildRequires:	automake
 BuildRequires:	autoconf
 BuildRequires:	bind-devel
-BuildRequires:	openldap-devel
+BuildRequires:	openldap-devel >= 2.3.0
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	mktemp
