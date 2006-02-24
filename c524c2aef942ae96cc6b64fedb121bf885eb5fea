@@ -1,0 +1,3 @@
+- fixed autofs.init script (s/ps\ ax/ps\ axw/)
+- rel. 5
+- STBR
