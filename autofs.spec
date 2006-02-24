@@ -28,16 +28,17 @@ Source6:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-hesiod-includes.patch
 Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-misc-fixes.patch
-Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-multi-parse-fix.patch   
+Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-multi-parse-fix.patch
 Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-no-unlink-upstream.patch
-Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-non-replicated-ping.patch 
-BuildRequires:	automake
+Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-non-replicated-ping.patch
 BuildRequires:	autoconf
+BuildRequires:	automake
 BuildRequires:	bind-devel
 BuildRequires:	openldap-devel >= 2.3.0
-PreReq:		rc-scripts
+BuildRequires:	rpmbuild(macros) >= 1.268
 Requires(post,preun):	/sbin/chkconfig
 Requires:	mktemp
+Requires:	rc-scripts
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sysconfdir	/etc/autofs
@@ -136,22 +137,16 @@ rm -rf $RPM_BUILD_ROOT
 
 %post
 /sbin/chkconfig --add autofs
-# triggerpostun would get called after %post
+# triggerpostun would get called after %%post
 if [ -f /var/lock/subsys/automount ]; then
-	mv /var/lock/subsys/automount /var/lock/subsys/autofs
+	mv /var/lock/subsys/{automount,autofs}
 fi
-if test -r /var/lock/subsys/autofs; then
-	/etc/rc.d/init.d/autofs restart 1>&2
-else
-	echo "Run \"/etc/rc.d/init.d/autofs start\" to start autofs daemon."
-fi
+%service autofs restart "autofs daemon"
 
 %preun
 if [ "$1" = "0" ]; then
+	%service autofs stop
 	/sbin/chkconfig --del autofs
-	if [ -f /var/lock/subsys/autofs ]; then
-		/etc/rc.d/init.d/autofs stop 1>&2
-	fi
 fi
 
 %files
