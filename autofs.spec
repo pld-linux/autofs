@@ -11,7 +11,7 @@ Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.1.4
-Release:	3.2
+Release:	3.6
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -28,6 +28,7 @@ Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-misc-fi
 Patch3:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-multi-parse-fix.patch
 Patch4:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-no-unlink-upstream.patch
 Patch5:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-non-replicated-ping.patch
+Patch6:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-auto.smb-cifs.patch
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
@@ -101,6 +102,7 @@ trzymanych na serwerze LDAP.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %build
 chmod a+w configure
