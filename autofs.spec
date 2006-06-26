@@ -1,9 +1,7 @@
 # TODO:
-# What about unpacked files:
-#  /etc/auto.master
-#  /etc/auto.misc
-#  /etc/auto.net
-# Probably Source{2,3,5} are obsolete.
+# - change /net to something FHS-compliant ?
+# - upgrade to autofs5 - maybe separate package?
+# - build of ldap-related things has some errors
 Summary:	autofs daemon
 Summary(de):	autofs daemon
 Summary(es):	Servidor autofs
@@ -13,18 +11,17 @@ Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.1.4
-Release:	3
+Release:	3.2
 Epoch:		1
-License:	GPL
+License:	GPL v2+
 Group:		Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v4/%{name}-%{version}.tar.bz2
 # Source0-md5:	7e3949114c00665b4636f0c318179657
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
-Source3:	%{name}-auto.misc
-Source4:	%{name}-auto.mnt
-Source5:	%{name}-auto.net
-Source6:	%{name}.sysconfig
+Source3:	%{name}-auto.media
+Source4:	%{name}-auto.net
+Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-hesiod-includes.patch
 Patch2:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-misc-fixes.patch
@@ -111,7 +108,10 @@ chmod a+w configure
 %{__autoconf}
 %configure
 
-%{__make}
+%{__make} \
+	initdir=/etc/rc.d/init.d \
+	CC="%{__cc}" \
+	DAEMON_CFLAGS="%{rpmcflags}"
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -124,13 +124,15 @@ install -d $RPM_BUILD_ROOT{/misc,/net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/m
 install %{SOURCE1}	$RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
 
 install %{SOURCE2}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.master
-install %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.misc
-install %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.mnt
-install %{SOURCE5} 	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
-install %{SOURCE6} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
+install %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.media
+install %{SOURCE4} 	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
+install %{SOURCE5} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 mv $RPM_BUILD_ROOT/etc/auto.smb $RPM_BUILD_ROOT%{_sysconfdir}
 
-touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,misc,var,tmp}
+touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,var,tmp}
+
+# Do some cleanups:
+rm -f $RPM_BUILD_ROOT/etc/auto.{master,misc,net}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -151,22 +153,19 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc README* CHANGELOG
+%doc CHANGELOG CREDITS README*
 
 %attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/autofs
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.home
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.master
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.misc
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.mnt
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.media
 %attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.net
 %attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.smb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.tmp
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.var
 %attr(755,root,root) %{_sbindir}/automount
-
-%dir /misc
 %dir /net
 
 %dir %{_libdir}/autofs
