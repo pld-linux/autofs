@@ -54,11 +54,11 @@ if [ -f /etc/autofs/auto.master ]; then
 			map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
 			options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
 			if [ -x $map ]; then
-				echo "$DAEMON --timeout $TIMEOUT $dir program $map $options"
+				echo "$DAEMON --timeout ${TIMEOUT} ${OPTIONS} $dir program $map $options"
 			elif [ -f $map ]; then
-				echo "$DAEMON --timeout $TIMEOUT $dir file $map $options"
+				echo "$DAEMON --timeout ${TIMEOUT} ${OPTIONS} $dir file $map $options"
 			else
-				echo "$DAEMON --timeout $TIMEOUT $dir `basename $map` $options"
+				echo "$DAEMON --timeout ${TIMEOUT} ${OPTIONS} $dir `basename $map` $options"
 			fi
 			else
 				map=`echo $map | cut -f2- -d:`
@@ -66,7 +66,7 @@ if [ -f /etc/autofs/auto.master ]; then
 					if [ "$maptype" = "file" ]; then
 						map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
 					fi
-					echo "$DAEMON --timeout $TIMEOUT $dir $maptype $map $options"
+					echo "$DAEMON --timeout $TIMEOUT ${OPTIONS} $dir $maptype $map $options"
 				fi
 			fi
 		fi
@@ -93,7 +93,7 @@ if is_yes $USE_YP; then
 				options=`echo "$options" | sed -e '
 				  s/--*t\(imeout\)*[ \t]*[0-9][0-9]*//g
 				  s/\(^\|[ \t]\)-/\1/g'`
-				echo "$DAEMON --timeout $TIMEOUT $mountoptions \
+				echo "$DAEMON --timeout $TIMEOUT ${OPTIONS} $mountoptions \
 				  $dir yp $map $options"
 			fi
 		done
