@@ -4,7 +4,7 @@
 # Details may be found in the autofs(5) manpage
 
 kernel		-ro,soft,intr		ftp.kernel.org:/pub/linux
-cd		-fstype=iso9660,ro	:/dev/cdrom
+cdrom		-fstype=iso9660,ro	:/dev/cdrom
 
 # the following entries are samples to pique your imagination
 #floppy		-fstype=auto		:/dev/fd0
