@@ -1,0 +1,13 @@
+# $Id$
+# This is an automounter map and it has the following format
+# key [ -mount-options-separated-by-comma ] location
+# Details may be found in the autofs(5) manpage
+
+kernel		-ro,soft,intr		ftp.kernel.org:/pub/linux
+cd		-fstype=iso9660,ro	:/dev/cdrom
+
+# the following entries are samples to pique your imagination
+#floppy		-fstype=auto		:/dev/fd0
+#floppy		-fstype=ext2		:/dev/fd0
+#e2floppy	-fstype=ext2		:/dev/fd0
+#jaz		-fstype=ext2		:/dev/sdc1
