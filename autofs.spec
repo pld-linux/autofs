@@ -11,7 +11,7 @@ Summary(pt_BR):	Servidor autofs
 Summary(tr):	autofs sunucu süreci
 Name:		autofs
 Version:	4.1.4
-Release:	3.6
+Release:	4
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -156,8 +156,6 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc CHANGELOG CREDITS README*
-
-%attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %dir %{_sysconfdir}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/autofs
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.home
@@ -167,14 +165,13 @@ fi
 %attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.smb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.tmp
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.var
+%attr(754,root,root) %config /etc/rc.d/init.d/autofs
 %attr(755,root,root) %{_sbindir}/automount
 %dir /net
-
 %dir %{_libdir}/autofs
 %attr(755,root,root) %{_libdir}/autofs/mount_*
 %attr(755,root,root) %{_libdir}/autofs/parse_*
 %attr(755,root,root) %{_libdir}/autofs/lookup_[!l]*
-
 %{_mandir}/man[58]/*
 
 %files ldap
