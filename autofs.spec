@@ -3,12 +3,12 @@
 # - upgrade to autofs5 - maybe separate package?
 # - build of ldap-related things has some errors
 Summary:	autofs daemon
-Summary(de):	autofs daemon
-Summary(es):	Servidor autofs
-Summary(fr):	démon autofs
-Summary(pl):	Demon autofs
-Summary(pt_BR):	Servidor autofs
-Summary(tr):	autofs sunucu süreci
+Summary(de.UTF-8):   autofs daemon
+Summary(es.UTF-8):   Servidor autofs
+Summary(fr.UTF-8):   dÃ©mon autofs
+Summary(pl.UTF-8):   Demon autofs
+Summary(pt_BR.UTF-8):   Servidor autofs
+Summary(tr.UTF-8):   autofs sunucu sÃ¼reci
 Name:		autofs
 Version:	4.1.4
 Release:	4
@@ -46,43 +46,43 @@ autofs is a daemon which automatically mounts filesystems when you use
 them, and unmounts them later when you are not using them. This can
 include network filesystems, CD-ROMs, floppies, and so forth.
 
-%description -l de
-autofs ist ein Dämon, der Dateisysteme automatisch montiert, wenn sie
-benutzt werden, und sie später bei Nichtbenutzung wieder demontiert.
-Dies kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches
-einschließen.
+%description -l de.UTF-8
+autofs ist ein DÃ¤mon, der Dateisysteme automatisch montiert, wenn sie
+benutzt werden, und sie spÃ¤ter bei Nichtbenutzung wieder demontiert.
+Dies kann Netz-Dateisysteme, CD-ROMs, Disketten und Ã¤hnliches
+einschlieÃŸen.
 
-%description -l es
-Autofs es un servidor que monta automáticamente sistemas de archivos
-cuando los usa, y los desmonta, más tarde, al terminar de usarlos.
+%description -l es.UTF-8
+Autofs es un servidor que monta automÃ¡ticamente sistemas de archivos
+cuando los usa, y los desmonta, mÃ¡s tarde, al terminar de usarlos.
 Incluyendo sistemas de archivo en red, CD-ROMS, disquetes, etc.
 
-%description -l fr
-autofs est un démon qui monte automatiquement les systèmes de fichiers
-lorsqu'on les utilise et les démonte lorsqu'on ne les utilise plus.
-Cela inclus les systèmes de fichiers réseau, les CD-ROMs, les
+%description -l fr.UTF-8
+autofs est un dÃ©mon qui monte automatiquement les systÃ¨mes de fichiers
+lorsqu'on les utilise et les dÃ©monte lorsqu'on ne les utilise plus.
+Cela inclus les systÃ¨mes de fichiers rÃ©seau, les CD-ROMs, les
 disquettes, etc.
 
-%description -l pl
-Autofs jest demonem, który montuje automatycznie systemy plików je¿eli
-je u¿ywasz i odmontowuje pó¼niej, je¿eli ich nie u¿ywasz. Mo¿e
-montowaæ sieciowy system plików, CD-romy, stacje dyskietek i inne.
+%description -l pl.UTF-8
+Autofs jest demonem, ktÃ³ry montuje automatycznie systemy plikÃ³w jeÅ¼eli
+je uÅ¼ywasz i odmontowuje pÃ³Åºniej, jeÅ¼eli ich nie uÅ¼ywasz. MoÅ¼e
+montowaÄ‡ sieciowy system plikÃ³w, CD-romy, stacje dyskietek i inne.
 
-%description -l pt_BR
-O autofs é um servidor que monta automaticamente sistemas de arquivos
-quando estes forem usados, desmontando-os mais tarde quando não
+%description -l pt_BR.UTF-8
+O autofs Ã© um servidor que monta automaticamente sistemas de arquivos
+quando estes forem usados, desmontando-os mais tarde quando nÃ£o
 estiverem mais em uso. Incluindo sistemas de arquivo em rede, CD-ROMS,
 disquetes, etc.
 
-%description -l tr
-autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden
-baðlar ve kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem,
-að dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
+%description -l tr.UTF-8
+autofs, kullanÄ±lan dosya sistemlerini gerek olunca kendiliÄŸinden
+baÄŸlar ve kullanÄ±mlarÄ± sona erince yine kendiliÄŸinden Ã§Ã¶zer. Bu iÅŸlem,
+aÄŸ dosya sistemleri, CD-ROM'lar ve disketler Ã¼zerinde yapÄ±labilir.
 
 %package ldap
 Summary:	LDAP lookup module for autofs
-Summary(pl):	Modu³ LDAP dla autofs
-Summary(pt_BR):	Suporte a mapas LDAP para o pacote autofs
+Summary(pl.UTF-8):   ModuÅ‚ LDAP dla autofs
+Summary(pt_BR.UTF-8):   Suporte a mapas LDAP para o pacote autofs
 Group:		Daemons
 Requires:	%{name} = %{epoch}:%{version}-%{release}
 
@@ -90,8 +90,8 @@ Requires:	%{name} = %{epoch}:%{version}-%{release}
 This package contains the autofs module necessary to use automount
 maps stored on an LDAP server.
 
-%description ldap -l pl
-Ten pakiet zawiera modu³ autofs potrzebny do u¿ywania map automounta
+%description ldap -l pl.UTF-8
+Ten pakiet zawiera moduÅ‚ autofs potrzebny do uÅ¼ywania map automounta
 trzymanych na serwerze LDAP.
 
 %prep
