@@ -3,12 +3,12 @@
 # - upgrade to autofs5 - maybe separate package?
 # - build of ldap-related things has some errors
 Summary:	autofs daemon
-Summary(de.UTF-8):   autofs daemon
-Summary(es.UTF-8):   Servidor autofs
-Summary(fr.UTF-8):   démon autofs
-Summary(pl.UTF-8):   Demon autofs
-Summary(pt_BR.UTF-8):   Servidor autofs
-Summary(tr.UTF-8):   autofs sunucu süreci
+Summary(de.UTF-8):	autofs daemon
+Summary(es.UTF-8):	Servidor autofs
+Summary(fr.UTF-8):	démon autofs
+Summary(pl.UTF-8):	Demon autofs
+Summary(pt_BR.UTF-8):	Servidor autofs
+Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	4.1.4
 Release:	4
@@ -81,8 +81,8 @@ ağ dosya sistemleri, CD-ROM'lar ve disketler üzerinde yapılabilir.
 
 %package ldap
 Summary:	LDAP lookup module for autofs
-Summary(pl.UTF-8):   Moduł LDAP dla autofs
-Summary(pt_BR.UTF-8):   Suporte a mapas LDAP para o pacote autofs
+Summary(pl.UTF-8):	Moduł LDAP dla autofs
+Summary(pt_BR.UTF-8):	Suporte a mapas LDAP para o pacote autofs
 Group:		Daemons
 Requires:	%{name} = %{epoch}:%{version}-%{release}
 
