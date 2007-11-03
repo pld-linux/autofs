@@ -32,7 +32,7 @@ Patch6:		http://www.kernel.org/pub/linux/daemons/autofs/v4/%{name}-4.1.4-auto.sm
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
-BuildRequires:	openldap-devel >= 2.3.0
+BuildRequires:	openldap-devel >= 2.4.6
 BuildRequires:	rpmbuild(macros) >= 1.268
 Requires(post,preun):	/sbin/chkconfig
 Requires:	mktemp
