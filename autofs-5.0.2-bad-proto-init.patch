@@ -1,0 +1,43 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 6931791..91903e9 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -1,6 +1,7 @@
+ ??/??/2007 autofs-5.0.3
+ -----------------------
+ - include krb5.h in lookup_ldap.h (some openssl doesn't implicitly include it).
++- correct initialization of local var in parse_server_string.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index 06506a0..de8d515 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -549,7 +549,7 @@ static int parse_server_string(const char *url, struct lookup_context *ctxt)
+ 	const char *ptr, *name;
+ 	int l, al_len;
+ 
+-	*proto = '\0';
++	memset(proto, 0, 9);
+ 	ptr = url;
+ 
+ 	debug(LOGOPT_NONE,
+@@ -620,7 +620,7 @@ static int parse_server_string(const char *url, struct lookup_context *ctxt)
+ 	} else if (strchr(ptr, ':') != NULL) {
+ 		char *q = NULL;
+ 
+-		/* Isolate the server(s). Include the port spec */
++		/* Isolate the server. Include the port spec */
+ 		q = strchr(ptr, ':');
+ 		if (isdigit(*q))
+ 			while (isdigit(*q))
+@@ -633,7 +633,7 @@ static int parse_server_string(const char *url, struct lookup_context *ctxt)
+ 		}
+ 
+ 		l = q - ptr;
+-		if (proto) {
++		if (*proto) {
+ 			al_len = l + strlen(proto) + 2;
+ 			tmp = malloc(al_len);
+ 		} else {

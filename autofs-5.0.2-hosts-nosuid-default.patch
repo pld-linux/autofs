@@ -1,0 +1,91 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index c486a7b..0fcdfd4 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -53,6 +53,7 @@
+ - add authentication option for using an external credential cache.
+ - expand support for the "%" hack.
+ - fix to quoting for exports gathered by hosts map.
++- use mount option "nosuid" for "-hosts" map unless "suid" is explicily specified.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/man/auto.master.5.in b/man/auto.master.5.in
+index d488960..56aaa5d 100644
+--- a/man/auto.master.5.in
++++ b/man/auto.master.5.in
+@@ -195,6 +195,9 @@ For example, with an entry in the master map of
+ .hy
+ accessing /net/myserver will mount exports from myserver on directories below
+ /net/myserver.
++.P
++NOTE: mounts done from a hosts map will be mounted with the "nosuid" option
++unless the "suid" option is explicitly given in the master map entry.
+ .SH LDAP MAPS
+ If the map type \fBldap\fP is specified the mapname is of the form
+ \fB[//servername/]dn\fP, where the optional \fBservername\fP is
+diff --git a/modules/parse_sun.c b/modules/parse_sun.c
+index 186e567..9a97329 100644
+--- a/modules/parse_sun.c
++++ b/modules/parse_sun.c
+@@ -496,6 +496,7 @@ static int sun_mount(struct autofs_point *ap, const char *root,
+ 	int rv, cur_state;
+ 	char *mountpoint;
+ 	char *what;
++	char *type;
+ 
+ 	if (*options == '\0')
+ 		options = NULL;
+@@ -585,6 +586,36 @@ static int sun_mount(struct autofs_point *ap, const char *root,
+ 	mountpoint = alloca(namelen + 1);
+ 	sprintf(mountpoint, "%.*s", namelen, name);
+ 
++	type = ap->entry->maps->type;
++	if (type && !strcmp(type, "hosts")) {
++		if (options) {
++			if (!strstr(options, "suid")) {
++				char *tmp = alloca(strlen(options) + 8);
++				if (!tmp) {
++					error(ap->logopt, MODPREFIX
++					      "alloca failed for options");
++					if (nonstrict)
++						return -1;
++					return 1;
++				}
++				strcpy(tmp, options);
++				strcat(tmp, ",nosuid");
++				options = tmp;
++			}
++		} else {
++			char *tmp = alloca(7);
++			if (!tmp) {
++				error(ap->logopt,
++				      MODPREFIX "alloca failed for options");
++				if (nonstrict)
++					return -1;
++				return 1;
++			}
++			strcpy(tmp, "nosuid");
++			options = tmp;
++		}
++	}
++
+ 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cur_state);
+ 	if (!strcmp(fstype, "nfs")) {
+ 		what = alloca(loclen + 1);
+diff --git a/samples/auto.master b/samples/auto.master
+index d4796a3..4995976 100644
+--- a/samples/auto.master
++++ b/samples/auto.master
+@@ -5,6 +5,11 @@
+ # For details of the format look at autofs(5).
+ #
+ /misc	/etc/auto.misc
++#
++# NOTE: mounts done from a hosts map will be mounted with the
++#	"nosuid" option unless the "suid" option is explicitly
++#	given.
++#
+ /net	-hosts
+ #
+ # Include central master map if it can be found using

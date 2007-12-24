@@ -1,0 +1,38 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 93c79cf..ca290f9 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -37,6 +37,7 @@
+ - remove unused export validation code.
+ - add dynamic logging (adapted from v4 patch from Jeff Moyer).
+ - fix recursive loopback mounts (Matthias Koenig).
++- add map re-load to verbose logging.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/daemon/automount.c b/daemon/automount.c
+index 9ec6923..7e7d1e6 100644
+--- a/daemon/automount.c
++++ b/daemon/automount.c
+@@ -1278,6 +1278,8 @@ static void *do_read_master(void *arg)
+ 
+ 	defaults_read_config(1);
+ 
++	info(logopt, "re-reading master map %s", master->name);
++
+ 	status = master_read_master(master, age, readall);
+ 
+ 	master->reading = 0;
+diff --git a/daemon/state.c b/daemon/state.c
+index a2da762..cf07aac 100644
+--- a/daemon/state.c
++++ b/daemon/state.c
+@@ -376,6 +376,8 @@ static void *do_readmap(void *arg)
+ 
+ 	pthread_cleanup_push(do_readmap_cleanup, ra);
+ 
++	info(ap->logopt, "re-reading map for %s", ap->path);
++
+ 	status = lookup_nss_read_map(ap, NULL, now);
+ 	if (!status)
+ 		pthread_exit(NULL);

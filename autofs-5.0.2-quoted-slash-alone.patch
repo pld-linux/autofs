@@ -1,0 +1,26 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index bc4d8fd..1bf4b27 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -9,6 +9,7 @@
+ - fix mount point directory creation for bind mounts.
+ - add quoting for exports gathered by hosts map.
+ - fix wait time resolution in alarm and state queue handlers.
++- fix handling of quoted slash alone.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/lib/parse_subs.c b/lib/parse_subs.c
+index ad19f34..3627f44 100644
+--- a/lib/parse_subs.c
++++ b/lib/parse_subs.c
+@@ -297,7 +297,8 @@ char *sanitize_path(const char *path, int origlen, unsigned int type, unsigned i
+ 		return NULL;
+ 	}
+ 
+-	if (origlen > 1 && *(cp - 1) == '/')
++	/* Remove trailing / but watch out for a quoted / alone */
++	if (strlen(cp) > 1 && origlen > 1 && *(cp - 1) == '/')
+ 		*(cp - 1) = '\0';
+ 
+ 	return s_path;

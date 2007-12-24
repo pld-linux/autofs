@@ -1,0 +1,31 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 09b0541..d8a6987 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -56,6 +56,7 @@
+ - use mount option "nosuid" for "-hosts" map unless "suid" is explicily specified.
+ - second attempt fixing quoting for exports gathered by hosts map.
+ - quell annoying "cannot open mount module" message.
++- fix for improve handling of server not available.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/modules/lookup_file.c b/modules/lookup_file.c
+index a77068a..ab2dd0f 100644
+--- a/modules/lookup_file.c
++++ b/modules/lookup_file.c
+@@ -474,8 +474,12 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 				     MODPREFIX
+ 				     "failed to read included master map %s",
+ 				     master->name);
+-				fclose(f);
+-				return NSS_STATUS_UNAVAIL;
++				if (!master->recurse) {
++					master->depth--;
++					master->recurse = 0;
++					fclose(f);
++					return NSS_STATUS_UNAVAIL;
++				}
+ 			}
+ 			master->depth--;
+ 			master->recurse = 0;

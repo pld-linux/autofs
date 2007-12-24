@@ -1,0 +1,44 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index c6ab15f..5aee44c 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -16,6 +16,7 @@
+ - fix large file compile time option.
+ - don't fail on empty master map.
+ - add support for the "%" hack for case insensitive attribute schemas.
++- fix "nosymlink" option handling and add desription to man page.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/man/auto.master.5.in b/man/auto.master.5.in
+index 98afaa9..69c796e 100644
+--- a/man/auto.master.5.in
++++ b/man/auto.master.5.in
+@@ -138,6 +138,14 @@ Treat errors when mounting file systems as fatal. This is important when
+ multiple file systems should be mounted (`multimounts'). If this option
+ is given, no file system is mounted at all if at least one file system
+ can't be mounted.
++.TP
++.I "nosymlink"
++This is an autofs specific option that is a pseudo mount option and
++so is given without a leading dash. Historically this option was used
++to prevent symlinking of local NFS mounts. Nowadays it can be used to
++prevent bind mounting of local NFS filesystems as well. If you need to
++prevent bind mounting for only specific entrys in a map then this
++can be done by adding the "port=" mount option to the given entries.
+ .SH GENERAL SYSTEM DEFAULTS CONFIGURATION
+ .P
+ The default value of several general settings may be changed in the
+diff --git a/modules/mount_nfs.c b/modules/mount_nfs.c
+index 25f72b9..e7a9a8a 100644
+--- a/modules/mount_nfs.c
++++ b/modules/mount_nfs.c
+@@ -214,7 +214,7 @@ int mount_mount(struct autofs_point *ap, const char *root, const char *name, int
+ 			port_opt = strstr(nfsoptions, "port=");
+ 
+ 		/* Port option specified, don't try to bind */
+-		if (!port_opt && this->proximity == PROXIMITY_LOCAL) {
++		if (!nosymlink && !port_opt && this->proximity == PROXIMITY_LOCAL) {
+ 			/* Local host -- do a "bind" */
+ 			const char *bind_options = ro ? "ro" : "";
+ 

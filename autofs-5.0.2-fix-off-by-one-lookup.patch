@@ -1,0 +1,64 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 9312ad5..6379d18 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -47,6 +47,7 @@
+ - fix for dynamic logging breaking non-sasl build (Guillaume Rousse)
+ - eliminate NULL proc ping for singleton host or local mounts.
+ - fix incorrect read/write size of startup status token (Matthias Koenig).
++- fix off-by-one error for lookup of map keys exactly 255 characters long.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/modules/lookup_file.c b/modules/lookup_file.c
+index 23ea07d..550bf5c 100644
+--- a/modules/lookup_file.c
++++ b/modules/lookup_file.c
+@@ -1047,7 +1047,7 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 	debug(ap->logopt, MODPREFIX "looking up %s", name);
+ 
+-	key_len = snprintf(key, KEY_MAX_LEN, "%s", name);
++	key_len = snprintf(key, KEY_MAX_LEN + 1, "%s", name);
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index 93a1b40..b8484a2 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -2053,7 +2053,7 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 	debug(ap->logopt, MODPREFIX "looking up %s", name);
+ 
+-	key_len = snprintf(key, KEY_MAX_LEN, "%s", name);
++	key_len = snprintf(key, KEY_MAX_LEN + 1, "%s", name);
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 
+diff --git a/modules/lookup_nisplus.c b/modules/lookup_nisplus.c
+index bb1ca42..fee8b16 100644
+--- a/modules/lookup_nisplus.c
++++ b/modules/lookup_nisplus.c
+@@ -476,7 +476,7 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 	debug(ap->logopt, MODPREFIX "looking up %s", name);
+ 
+-	key_len = snprintf(key, KEY_MAX_LEN, "%s", name);
++	key_len = snprintf(key, KEY_MAX_LEN + 1, "%s", name);
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 
+diff --git a/modules/lookup_yp.c b/modules/lookup_yp.c
+index e8ca8e8..5f4f95f 100644
+--- a/modules/lookup_yp.c
++++ b/modules/lookup_yp.c
+@@ -567,7 +567,7 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 	debug(ap->logopt, MODPREFIX "looking up %s", name);
+ 
+-	key_len = snprintf(key, KEY_MAX_LEN, "%s", name);
++	key_len = snprintf(key, KEY_MAX_LEN + 1, "%s", name);
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 

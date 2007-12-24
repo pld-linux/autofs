@@ -1,0 +1,97 @@
+diff --git a/lib/master_tok.l b/lib/master_tok.l
+index 48bc233..5450753 100644
+--- a/lib/master_tok.l
++++ b/lib/master_tok.l
+@@ -108,8 +108,8 @@ AT_DC		([dD][[cC])
+ AT_O		([oO])
+ AT_C		([cC])
+ DNATTRSTR	{AT_CN}|{AT_NMN}|{AT_AMN}|{AT_OU}|{AT_DC}|{AT_O}|{AT_C}
+-DNNAMESTR	([[:alnum:]_.\-]+)
+-DNNAMETRM	(,|{WS}{NL}|{WS}#.*|\x00)
++DNNAMESTR	([[:alnum:]_.\- ]+)
++DNNAMETRM	(,|{OPTWS}{NL}|{OPTWS}#.*|{OPTWS}\x00)
+ 
+ INTMAP		(-hosts|-null)
+ MULTI		((multi)(,(sun|hesiod))?(:{OPTWS}|{WS}))
+@@ -379,7 +379,13 @@ void master_set_scan_buffer(const char *buffer)
+ {
+ 	line = buffer;
+ 	line_pos = &line[0];
+-	line_lim = line + strlen(buffer);
++	/*
++	 * Ensure buffer is 1 greater than string and is zeroed before
++	 * the parse so we can fit the extra NULL which allows us to
++	 * explicitly match an end of line within the buffer (ie. the
++	 * need for 2 NULLS when parsing in memeory buffers).
++	 */
++	line_lim = line + strlen(buffer) + 1;
+ }
+ 
+ #define min(a,b) (((a) < (b)) ? (a) : (b))
+diff --git a/modules/lookup_file.c b/modules/lookup_file.c
+index 921b32b..c093415 100644
+--- a/modules/lookup_file.c
++++ b/modules/lookup_file.c
+@@ -479,7 +479,7 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 
+ 			master->name = save_name;
+ 		} else {
+-			blen = path_len + 1 + ent_len + 1;
++			blen = path_len + 1 + ent_len + 2;
+ 			buffer = malloc(blen);
+ 			if (!buffer) {
+ 				error(logopt,
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index 00215af..dfb3054 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -1368,7 +1368,7 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 			goto next;
+ 		}
+ 
+-		blen = strlen(*keyValue) + 1 + strlen(*values) + 1;
++		blen = strlen(*keyValue) + 1 + strlen(*values) + 2;
+ 		if (blen > PARSE_MAX_BUF) {
+ 			error(logopt, MODPREFIX "map entry too long");
+ 			ldap_value_free(values);
+diff --git a/modules/lookup_nisplus.c b/modules/lookup_nisplus.c
+index ff8bd49..bcdaeeb 100644
+--- a/modules/lookup_nisplus.c
++++ b/modules/lookup_nisplus.c
+@@ -90,7 +90,7 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 	char *path, *ent;
+ 	char *buffer;
+ 	char buf[MAX_ERR_BUF];
+-	int cur_state;
++	int cur_state, len;
+ 
+ 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cur_state);
+ 	tablename = alloca(strlen(ctxt->mapname) + strlen(ctxt->domainname) + 20);
+@@ -138,11 +138,13 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 
+ 		ent = ENTRY_VAL(this, 1);
+ 
+-		buffer = malloc(ENTRY_LEN(this, 0) + 1 + ENTRY_LEN(this, 1) + 1);
++		len = ENTRY_LEN(this, 0) + 1 + ENTRY_LEN(this, 1) + 2;
++		buffer = malloc(len);
+ 		if (!buffer) {
+ 			logerr(MODPREFIX "could not malloc parse buffer");
+ 			continue;
+ 		}
++		memset(buffer, 0, len);
+ 
+ 		strcat(buffer, path);
+ 		strcat(buffer, " ");
+diff --git a/modules/lookup_yp.c b/modules/lookup_yp.c
+index 63fc8e3..7ba6940 100644
+--- a/modules/lookup_yp.c
++++ b/modules/lookup_yp.c
+@@ -178,7 +178,7 @@ int yp_all_master_callback(int status, char *ypkey, int ypkeylen,
+ 	*(ypkey + ypkeylen) = '\0';
+ 	*(val + vallen) = '\0';
+ 
+-	len = ypkeylen + 1 + vallen + 1;
++	len = ypkeylen + 1 + vallen + 2;
+ 
+ 	buffer = alloca(len);
+ 	if (!buffer) {

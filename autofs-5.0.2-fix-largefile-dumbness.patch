@@ -1,0 +1,25 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 98d082c..20562bd 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -13,6 +13,7 @@
+ - fix parse confusion between attribute and attribute value.
+ - fix version passed to get_supported_ver_and_cost.
+ - mark map instances stale so they aren't "cleaned" during updates.
++- fix large file compile time option.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/Makefile.rules b/Makefile.rules
+index b1d1a49..30716dc 100644
+--- a/Makefile.rules
++++ b/Makefile.rules
+@@ -44,7 +44,7 @@ CXXFLAGS  = $(CFLAGS)
+ LD        = ld
+ SOLDFLAGS = -shared
+ 
+-CFLAGS += -D_REENTRANT
++CFLAGS += -D_REENTRANT -D_FILE_OFFSET_BITS=64
+ LDFLAGS += -lpthread
+ 
+ ifdef DMALLOCLIB

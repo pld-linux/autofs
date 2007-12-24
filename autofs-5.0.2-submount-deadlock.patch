@@ -1,0 +1,34 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index ddfa6f1..2db9b39 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -30,6 +30,7 @@
+ - add LDAP_URI, LDAP_TIMEOUT and LDAP_NETWORK_TIMEOUT configuration options.
+ - fix forground logging and add option to man page.
+ - remove unjustified, nasty comment about krb5 package.
++- fix deadlock in submount mount module.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/modules/mount_autofs.c b/modules/mount_autofs.c
+index f8d8ed2..c45b91b 100644
+--- a/modules/mount_autofs.c
++++ b/modules/mount_autofs.c
+@@ -215,6 +215,8 @@ int mount_mount(struct autofs_point *ap, const char *root, const char *name,
+ 		return 1;
+ 	}
+ 
++	mounts_mutex_lock(ap);
++
+ 	status = pthread_mutex_lock(&suc.mutex);
+ 	if (status) {
+ 		crit(ap->logopt,
+@@ -227,8 +229,6 @@ int mount_mount(struct autofs_point *ap, const char *root, const char *name,
+ 	suc.done = 0;
+ 	suc.status = 0;
+ 
+-	mounts_mutex_lock(ap);
+-
+ 	if (pthread_create(&thid, NULL, handle_mounts, nap)) {
+ 		crit(ap->logopt,
+ 		     MODPREFIX

@@ -1,0 +1,25 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 1bf4b27..678e764 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -10,6 +10,7 @@
+ - add quoting for exports gathered by hosts map.
+ - fix wait time resolution in alarm and state queue handlers.
+ - fix handling of quoted slash alone.
++- fix parse confusion between attribute and attribute value.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/lib/master_tok.l b/lib/master_tok.l
+index 9bfeefa..ff69a24 100644
+--- a/lib/master_tok.l
++++ b/lib/master_tok.l
+@@ -272,7 +272,7 @@ OPTTOUT		(-t{OPTWS}|-t{OPTWS}={OPTWS}|--timeout{OPTWS}|--timeout{OPTWS}={OPTWS})
+ 		return DNSERVER;
+ 	}
+ 
+-	{DNATTRSTR} {
++	{DNATTRSTR}/"=" {
+ 		strcpy(master_lval.strtype, master_text);
+ 		return DNATTR;
+ 	}

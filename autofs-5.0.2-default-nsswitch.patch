@@ -1,0 +1,63 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 9c99966..92013ce 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -18,6 +18,7 @@
+ - add support for the "%" hack for case insensitive attribute schemas.
+ - fix "nosymlink" option handling and add desription to man page.
+ - fix don't fail on empty master map.
++- if there's no "automount" entry in nsswitch.conf use "files" source.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/lib/nss_parse.y b/lib/nss_parse.y
+index 4f67f08..e559696 100644
+--- a/lib/nss_parse.y
++++ b/lib/nss_parse.y
+@@ -45,6 +45,8 @@ struct nss_action act[NSS_STATUS_MAX];
+ #define YYLTYPE_IS_TRIVIAL 0
+ #endif
+ 
++unsigned int nss_automount_found;
++
+ extern int nss_lineno;
+ extern int nss_lex(void);
+ extern FILE *nss_in;
+@@ -183,10 +185,16 @@ int nsswitch_parse(struct list_head *list)
+ 
+ 	nss_in = nsswitch;
+ 
++	nss_automount_found = 0;
+ 	nss_list = list;
+ 	status = nss_parse();
+ 	nss_list = NULL;
+ 
++	/* No "automount" nsswitch entry, use "files" */
++	if (!nss_automount_found)
++		if (add_source(list, "files"))
++			status = 0;
++
+ 	pthread_cleanup_pop(1);
+ 	pthread_cleanup_pop(1);
+ 
+diff --git a/lib/nss_tok.l b/lib/nss_tok.l
+index 71d83b0..f96b47f 100644
+--- a/lib/nss_tok.l
++++ b/lib/nss_tok.l
+@@ -56,6 +56,8 @@ int nss_wrap(void);
+ #define YY_MAIN 0
+ #endif
+ 
++extern unsigned int nss_automount_found;
++
+ %}
+ 
+ %option nounput
+@@ -85,6 +87,7 @@ other		[[:alnum:]@$%^&*()-+_":;?,<>./'{}~`]+
+ %%
+ 
+ ^{automount}: {
++	nss_automount_found = 1;
+ 	BEGIN(AUTOMOUNT);
+ }
+ 

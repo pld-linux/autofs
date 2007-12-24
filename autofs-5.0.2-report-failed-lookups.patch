@@ -1,0 +1,123 @@
+diff --git a/modules/lookup_file.c b/modules/lookup_file.c
+index 1007de4..23ea07d 100644
+--- a/modules/lookup_file.c
++++ b/modules/lookup_file.c
+@@ -1088,8 +1088,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 			if (status == NSS_STATUS_COMPLETED)
+ 				return NSS_STATUS_SUCCESS;
+ 
+-			debug(ap->logopt,
+-			      MODPREFIX "check indirect map lookup failed");
++			error(ap->logopt,
++			      MODPREFIX "key \"%s\" not found in map",
++			      name);
+ 
+ 			return NSS_STATUS_NOTFOUND;
+ 		}
+@@ -1130,7 +1131,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 			}
+ 			cache_unlock(mc);
+ 		}
+-	}
++	} else
++		error(ap->logopt,
++		      MODPREFIX "key \"%s\" not found in map.", name);
+ 
+ 	if (ret)
+ 		return NSS_STATUS_TRYAGAIN;
+diff --git a/modules/lookup_hesiod.c b/modules/lookup_hesiod.c
+index 649e24c..737a47e 100644
+--- a/modules/lookup_hesiod.c
++++ b/modules/lookup_hesiod.c
+@@ -129,8 +129,8 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 	if (!hes_result || !hes_result[0]) {
+ 		/* Note: it is not clear to me how to distinguish between
+ 		 * the "no search results" case and other failures.  --JM */
+-		warn(ap->logopt,
+-		     MODPREFIX "entry \"%s\" not found in map", name);
++		error(ap->logopt,
++		      MODPREFIX "key \"%s\" not found in map", name);
+ 		status = pthread_mutex_unlock(&hesiod_mutex);
+ 		if (status)
+ 			fatal(status);
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index 4dea3b2..bad48bb 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -2089,8 +2089,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 		status = check_map_indirect(ap, lkp_key, strlen(lkp_key), ctxt);
+ 		free(lkp_key);
+ 		if (status) {
+-			debug(ap->logopt,
+-			      MODPREFIX "check indirect map failure");
++			error(ap->logopt,
++			      MODPREFIX "key \"%s\" not found in map",
++			      name);
+ 			return status;
+ 		}
+ 	}
+@@ -2129,7 +2130,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 			}
+ 			cache_unlock(mc);
+ 		}
+-	}
++	} else
++		error(ap->logopt,
++		      MODPREFIX "key \"%s\" not found in map", name);
+ 
+ 	if (ret)
+ 		return NSS_STATUS_TRYAGAIN;
+diff --git a/modules/lookup_nisplus.c b/modules/lookup_nisplus.c
+index e948c14..bb1ca42 100644
+--- a/modules/lookup_nisplus.c
++++ b/modules/lookup_nisplus.c
+@@ -512,8 +512,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 		status = check_map_indirect(ap, lkp_key, strlen(lkp_key), ctxt);
+ 		if (status) {
+-			debug(ap->logopt,
+-			      MODPREFIX "check indirect map failure");
++			error(ap->logopt,
++			      MODPREFIX "key \"%s\" not found in map",
++			      name);
+ 			return status;
+ 		}
+ 	}
+@@ -551,7 +552,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 			}
+ 			cache_unlock(mc);
+ 		}
+-	}
++	} else
++		error(ap->logopt,
++		      MODPREFIX "key \"%s\" not found in map", name);
+ 
+ 	if (ret)
+ 		return NSS_STATUS_NOTFOUND;
+diff --git a/modules/lookup_yp.c b/modules/lookup_yp.c
+index 6c20145..e8ca8e8 100644
+--- a/modules/lookup_yp.c
++++ b/modules/lookup_yp.c
+@@ -604,8 +604,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 		status = check_map_indirect(ap, lkp_key, strlen(lkp_key), ctxt);
+ 		free(lkp_key);
+ 		if (status) {
+-			debug(ap->logopt,
+-			      MODPREFIX "check indirect map lookup failed");
++			error(ap->logopt,
++			      MODPREFIX "key \"%s\" not found in map",
++			      name);
+ 			return status;
+ 		}
+ 	}
+@@ -643,7 +644,9 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 			}
+ 			cache_unlock(mc);
+ 		}
+-	}
++	 } else
++		error(ap->logopt,
++		      MODPREFIX "key \"%s\" not found in map", name);
+ 
+ 	if (ret)
+ 		return NSS_STATUS_TRYAGAIN;

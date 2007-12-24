@@ -1,0 +1,25 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index dd08880..fdd07d1 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -32,6 +32,7 @@
+ - remove unjustified, nasty comment about krb5 package.
+ - fix deadlock in submount mount module.
+ - fix lack of ferror() checking when reading files.
++- fix typo in autofs(5) man page.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/man/autofs.5 b/man/autofs.5
+index eb15c2a..5a01791 100644
+--- a/man/autofs.5
++++ b/man/autofs.5
+@@ -128,7 +128,7 @@ entry looks like this:
+ .RS +.2i
+ .ta 1.0i
+ .nf
+-*	server:i/export/home/&
++*	server:/export/home/&
+ .fi
+ .RE
+ .sp

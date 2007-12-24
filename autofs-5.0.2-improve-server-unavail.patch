@@ -1,0 +1,212 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 6379d18..a9e509d 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -48,6 +48,7 @@
+ - eliminate NULL proc ping for singleton host or local mounts.
+ - fix incorrect read/write size of startup status token (Matthias Koenig).
+ - fix off-by-one error for lookup of map keys exactly 255 characters long.
++- improve handling of server not available.
+ 
+ 18/06/2007 autofs-5.0.2
+ -----------------------
+diff --git a/daemon/lookup.c b/daemon/lookup.c
+index 0be10d3..eb72411 100644
+--- a/daemon/lookup.c
++++ b/daemon/lookup.c
+@@ -298,8 +298,6 @@ static int do_read_map(struct autofs_point *ap, struct map_source *map, time_t a
+ 
+ 	status = lookup->lookup_read_map(ap, age, lookup->context);
+ 
+-	map->stale = 0;
+-
+ 	/*
+ 	 * For maps that don't support enumeration return success
+ 	 * and do whatever we must to have autofs function with an
+@@ -533,6 +531,10 @@ int lookup_nss_read_map(struct autofs_point *ap, struct map_source *source, time
+ 			if (result == NSS_STATUS_UNKNOWN)
+ 				continue;
+ 
++			/* Don't try to update the map cache if it's unavailable */
++			if (result == NSS_STATUS_UNAVAIL)
++				map->stale = 0;
++
+ 			if (result == NSS_STATUS_SUCCESS) {
+ 				at_least_one = 1;
+ 				result = NSS_STATUS_TRYAGAIN;
+@@ -553,7 +555,7 @@ int lookup_nss_read_map(struct autofs_point *ap, struct map_source *source, time
+ 	}
+ 	pthread_cleanup_pop(1);
+ 
+-	if (!result ||  at_least_one)
++	if (!result || at_least_one)
+ 		return 1;
+ 
+ 	return 0;
+diff --git a/daemon/state.c b/daemon/state.c
+index cf07aac..5bccfef 100644
+--- a/daemon/state.c
++++ b/daemon/state.c
+@@ -432,6 +432,7 @@ static void *do_readmap(void *arg)
+ 				me = cache_enumerate(mc, me);
+ 			}
+ 			pthread_cleanup_pop(1);
++			map->stale = 0;
+ 			map = map->next;
+ 		}
+ 		pthread_cleanup_pop(1);
+diff --git a/include/automount.h b/include/automount.h
+index fa5cd97..133fd32 100644
+--- a/include/automount.h
++++ b/include/automount.h
+@@ -121,6 +121,7 @@ struct autofs_point;
+ #define CHE_MISSING	0x0008
+ #define CHE_COMPLETED	0x0010
+ #define CHE_DUPLICATE	0x0020
++#define CHE_UNAVAIL	0x0040
+ 
+ #define HASHSIZE		77
+ #define NEGATIVE_TIMEOUT	10
+diff --git a/modules/lookup_file.c b/modules/lookup_file.c
+index 550bf5c..a77068a 100644
+--- a/modules/lookup_file.c
++++ b/modules/lookup_file.c
+@@ -469,11 +469,14 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 				master->recurse = 1;;
+ 			master->depth++;
+ 			status = lookup_nss_read_master(master, age);
+-			if (!status)
++			if (!status) {
+ 				warn(logopt,
+ 				     MODPREFIX
+ 				     "failed to read included master map %s",
+ 				     master->name);
++				fclose(f);
++				return NSS_STATUS_UNAVAIL;
++			}
+ 			master->depth--;
+ 			master->recurse = 0;
+ 
+@@ -484,6 +487,7 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 			if (!buffer) {
+ 				error(logopt,
+ 				      MODPREFIX "could not malloc parse buffer");
++				fclose(f);
+ 				return NSS_STATUS_UNAVAIL;
+ 			}
+ 			memset(buffer, 0, blen);
+@@ -721,9 +725,12 @@ int lookup_read_map(struct autofs_point *ap, time_t age, void *context)
+ 
+ 			/* Gim'ee some o' that 16k stack baby !! */
+ 			status = lookup_nss_read_map(ap, inc_source, age);
+-			if (!status)
++			if (!status) {
+ 				warn(ap->logopt,
+ 				     "failed to read included map %s", key);
++				fclose(f);
++				return NSS_STATUS_UNAVAIL;
++			}
+ 		} else {
+ 			char *s_key; 
+ 
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index b8484a2..7effbf1 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -1755,7 +1755,7 @@ static int lookup_one(struct autofs_point *ap,
+ 	/* Initialize the LDAP context. */
+ 	ldap = do_reconnect(ap->logopt, ctxt);
+ 	if (!ldap)
+-		return CHE_FAIL;
++		return CHE_UNAVAIL;
+ 
+ 	debug(ap->logopt,
+ 	      MODPREFIX "searching for \"%s\" under \"%s\"", query, ctxt->qdn);
+@@ -1999,6 +1999,21 @@ static int check_map_indirect(struct autofs_point *ap,
+ 	if (ret == CHE_FAIL) {
+ 		pthread_setcancelstate(cur_state, NULL);
+ 		return NSS_STATUS_NOTFOUND;
++	} else if (ret == CHE_UNAVAIL) {
++		/*
++		 * If the server is down and the entry exists in the cache
++		 * and belongs to this map return success and use the entry.
++		 */
++		struct mapent *exists = cache_lookup(mc, key);
++		if (exists && exists->source == source) {
++			pthread_setcancelstate(cur_state, NULL);
++			return NSS_STATUS_SUCCESS;
++		}
++
++		warn(ap->logopt,
++		     MODPREFIX "lookup for %s failed: connection failed", key);
++
++		return NSS_STATUS_UNAVAIL;
+ 	}
+ 	pthread_setcancelstate(cur_state, NULL);
+ 
+diff --git a/modules/lookup_nisplus.c b/modules/lookup_nisplus.c
+index fee8b16..628ffcf 100644
+--- a/modules/lookup_nisplus.c
++++ b/modules/lookup_nisplus.c
+@@ -385,9 +385,18 @@ static int check_map_indirect(struct autofs_point *ap,
+ 		return NSS_STATUS_NOTFOUND;
+ 
+ 	if (ret < 0) {
++		/*
++		 * If the server is down and the entry exists in the cache
++		 * and belongs to this map return success and use the entry.
++		 */
++		exists = cache_lookup(mc, key);
++		if (exists && exists->source == source)
++			return NSS_STATUS_SUCCESS;
++
+ 		warn(ap->logopt,
+ 		     MODPREFIX "lookup for %s failed: %s",
+ 		     key, nis_sperrno(-ret));
++
+ 		return NSS_STATUS_UNAVAIL;
+ 	}
+ 
+diff --git a/modules/lookup_yp.c b/modules/lookup_yp.c
+index 5f4f95f..f5097dc 100644
+--- a/modules/lookup_yp.c
++++ b/modules/lookup_yp.c
+@@ -239,6 +239,9 @@ int lookup_read_master(struct master *master, time_t age, void *context)
+ 		     MODPREFIX "read of master map %s failed: %s",
+ 		     mapname, yperr_string(err));
+ 
++		if (err == YPERR_PMAP || err == YPERR_YPSERV)
++			return NSS_STATUS_UNAVAIL;
++
+ 		return NSS_STATUS_NOTFOUND;
+ 	}
+ 
+@@ -336,6 +339,9 @@ int lookup_read_map(struct autofs_point *ap, time_t age, void *context)
+ 		     MODPREFIX "read of map %s failed: %s",
+ 		     ap->path, yperr_string(err));
+ 
++		if (err == YPERR_PMAP || err == YPERR_YPSERV)
++			return NSS_STATUS_UNAVAIL;
++
+ 		return NSS_STATUS_NOTFOUND;
+ 	}
+ 
+@@ -481,9 +487,18 @@ static int check_map_indirect(struct autofs_point *ap,
+ 		return NSS_STATUS_NOTFOUND;
+ 
+ 	if (ret < 0) {
++		/*
++		 * If the server is down and the entry exists in the cache
++		 * and belongs to this map return success and use the entry.
++		 */
++		exists = cache_lookup(mc, key);
++		if (exists && exists->source == source)
++			return NSS_STATUS_SUCCESS;
++
+ 		warn(ap->logopt,
+ 		     MODPREFIX "lookup for %s failed: %s",
+ 		     key, yperr_string(-ret));
++
+ 		return NSS_STATUS_UNAVAIL;
+ 	}
+ 
