@@ -10,7 +10,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.0.2
-Release:	0.5
+Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -222,10 +222,11 @@ trzymanych na serwerze LDAP.
 %patch71 -p1
 
 %build
-#chmod a+w configure
-#%{__aclocal}
-#%{__autoconf}
-%configure
+%{__aclocal}
+%{__autoconf}
+export initdir=/etc/rc.d/init.d
+%configure \
+	--with-confdir=%{_sysconfdir}
 
 %{__make} \
 	initdir=/etc/rc.d/init.d \
