@@ -1,6 +1,7 @@
 # TODO:
 # - change /net to something FHS-compliant ?
-# - build of ldap-related things has some errors
+# - fix ac/am regeneration
+#
 Summary:	autofs daemon
 Summary(de.UTF-8):	autofs daemon
 Summary(es.UTF-8):	Servidor autofs
@@ -10,7 +11,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.0.2
-Release:	1
+Release:	2
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -222,8 +223,8 @@ trzymanych na serwerze LDAP.
 %patch71 -p1
 
 %build
-%{__aclocal}
-%{__autoconf}
+#%{__aclocal}
+#%{__autoconf}
 export initdir=/etc/rc.d/init.d
 %configure \
 	--with-confdir=%{_sysconfdir}
