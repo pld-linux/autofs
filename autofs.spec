@@ -10,7 +10,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.0.2
-Release:	0.1
+Release:	0.5
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -293,4 +293,6 @@ fi
 
 %files ldap
 %defattr(644,root,root,755)
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/autofs_ldap_auth.conf
 %attr(755,root,root) %{_libdir}/autofs/lookup_ldap.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_ldaps.so
