@@ -33,7 +33,10 @@ Patch14:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}-cor
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
+BuildRequires:	bison
+BuildRequires:	flex
 BuildRequires:	krb5-devel
+BuildRequires:	libxml2-devel
 BuildRequires:	openldap-devel >= 2.4.6
 BuildRequires:	rpmbuild(macros) >= 1.268
 Requires(post,preun):	/sbin/chkconfig
@@ -42,6 +45,7 @@ Requires:	rc-scripts
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sysconfdir	/etc/autofs
+%define		filterout_ld	-Wl,--as-needed
 
 %description
 autofs is a daemon which automatically mounts filesystems when you use
@@ -118,7 +122,7 @@ export initdir=/etc/rc.d/init.d
 %{__make} \
 	initdir=/etc/rc.d/init.d \
 	CC="%{__cc}" \
-	DAEMON_CFLAGS="%{rpmcflags}"
+	DAEMON_CFLAGS="-fPIE %{rpmcflags}"
 
 %install
 rm -rf $RPM_BUILD_ROOT
