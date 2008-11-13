@@ -10,13 +10,13 @@ Summary(pl.UTF-8):	Demon autofs
 Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
-Version:	5.0.3
+Version:	5.0.4
 Release:	0.1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.bz2
-# Source0-md5:	27839fe6fa8105b2b7d31bc922fd7cf6
+# Source0-md5:	2646dde61edd08dd952255558c733c08
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
@@ -24,12 +24,6 @@ Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-hesiod-includes.patch
-## Official patches:
-Patch10:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}-ldap-page-control-configure-fix.patch
-Patch11:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}-xfn-not-supported.patch
-Patch12:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}-basedn-with-spaces-fix-3.patch
-Patch13:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}-nfs4-tcp-only.patch
-Patch14:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}-correct-ldap-lib.patch
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
@@ -104,13 +98,6 @@ trzymanych na serwerze LDAP.
 %setup -q
 %patch0 -p1
 %patch1 -p1
-
-#Official patches:
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
 
 %build
 #%{__aclocal}
