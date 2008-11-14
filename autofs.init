@@ -107,7 +107,8 @@ start() {
 	if [ ! -f /var/lock/subsys/autofs ]; then
 		msg_starting automounter
 		busy
-		getmounts | sh
+#		getmounts | sh
+		$DAEMON --timeout $TIMEOUT /etc/autofs/auto.master
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && ok || fail
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/autofs
@@ -139,15 +140,15 @@ case "$1" in
 	stop
 	start
 	;;
-  status)
-	nls "Configured Mount Points:"
-	getmounts
-	echo ""
-	nls "Active Mount Points:"
-	ps axw|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
-		while read pid tt stat time command; do echo $command; done
-	)
-	;;
+#  status)
+#	nls "Configured Mount Points:"
+#	getmounts
+#	echo ""
+#	nls "Active Mount Points:"
+#	ps axw|grep "[0-9]:[0-9][0-9] /usr/sbin/automount " | (
+#		while read pid tt stat time command; do echo $command; done
+#	)
+#	;;
   *)
 	msg_usage "$0 {start|stop|restart|force-reload|status}"
 	exit 3
