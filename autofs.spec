@@ -100,11 +100,12 @@ trzymanych na serwerze LDAP.
 %patch1 -p1
 
 %build
-#%{__aclocal}
-#%{__autoconf}
+%{__autoconf}
+
 export initdir=/etc/rc.d/init.d
 %configure \
-	--with-confdir=%{_sysconfdir}
+	--with-confdir=%{_sysconfdir} \
+	--with-mapdir=%{_sysconfdir}
 
 %{__make} \
 	initdir=/etc/rc.d/init.d \
@@ -125,12 +126,11 @@ install %{SOURCE2}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.master
 install %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.media
 install %{SOURCE4} 	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
 install %{SOURCE5} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
-mv $RPM_BUILD_ROOT/etc/auto.smb $RPM_BUILD_ROOT%{_sysconfdir}
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,var,tmp}
 
-# Do some cleanups:
-rm -f $RPM_BUILD_ROOT/etc/auto.{master,misc,net}
+# replaced in PLD by auto.media
+rm $RPM_BUILD_ROOT%{_sysconfdir}/auto.misc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -154,6 +154,7 @@ fi
 %doc CHANGELOG CREDITS README*
 %dir %{_sysconfdir}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/autofs
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.home
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.master
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.media
@@ -172,6 +173,6 @@ fi
 
 %files ldap
 %defattr(644,root,root,755)
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/autofs_ldap_auth.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs_ldap_auth.conf
 %attr(755,root,root) %{_libdir}/autofs/lookup_ldap.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_ldaps.so
