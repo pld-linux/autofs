@@ -1,6 +1,5 @@
 # TODO:
 # - change /net to something FHS-compliant ?
-# - fix ac/am regeneration
 #
 Summary:	autofs daemon
 Summary(de.UTF-8):	autofs daemon
@@ -28,9 +27,12 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
 BuildRequires:	bison
+BuildRequires:	e2fsprogs
 BuildRequires:	flex
+BuildRequires:	hesiod-devel
 BuildRequires:	krb5-devel
 BuildRequires:	libxml2-devel
+BuildRequires:	mount
 BuildRequires:	openldap-devel >= 2.4.6
 BuildRequires:	rpmbuild(macros) >= 1.268
 Requires(post,preun):	/sbin/chkconfig
@@ -104,6 +106,7 @@ trzymanych na serwerze LDAP.
 
 export initdir=/etc/rc.d/init.d
 %configure \
+	--enable-force-shutdown=yes \
 	--with-confdir=%{_sysconfdir} \
 	--with-mapdir=%{_sysconfdir}
 
@@ -166,9 +169,27 @@ fi
 %attr(755,root,root) %{_sbindir}/automount
 %dir /net
 %dir %{_libdir}/autofs
-%attr(755,root,root) %{_libdir}/autofs/mount_*
-%attr(755,root,root) %{_libdir}/autofs/parse_*
-%attr(755,root,root) %{_libdir}/autofs/lookup_[!l]*
+%attr(755,root,root) %{_libdir}/autofs/lookup_file.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_files.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_hesiod.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_hosts.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_multi.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_nis.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_nisplus.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_program.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_userhome.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_yp.so
+%attr(755,root,root) %{_libdir}/autofs/mount_afs.so
+%attr(755,root,root) %{_libdir}/autofs/mount_autofs.so
+%attr(755,root,root) %{_libdir}/autofs/mount_bind.so
+%attr(755,root,root) %{_libdir}/autofs/mount_changer.so
+%attr(755,root,root) %{_libdir}/autofs/mount_ext2.so
+%attr(755,root,root) %{_libdir}/autofs/mount_ext3.so
+%attr(755,root,root) %{_libdir}/autofs/mount_generic.so
+%attr(755,root,root) %{_libdir}/autofs/mount_nfs.so
+%attr(755,root,root) %{_libdir}/autofs/mount_nfs4.so
+%attr(755,root,root) %{_libdir}/autofs/parse_hesiod.so
+%attr(755,root,root) %{_libdir}/autofs/parse_sun.so
 %{_mandir}/man[58]/*
 
 %files ldap
