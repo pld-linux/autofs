@@ -30,7 +30,7 @@ BuildRequires:	bison
 BuildRequires:	e2fsprogs
 BuildRequires:	flex
 BuildRequires:	hesiod-devel
-BuildRequires:	krb5-devel
+BuildRequires:	heimdal-devel
 BuildRequires:	libxml2-devel
 BuildRequires:	mount
 BuildRequires:	openldap-devel >= 2.4.6
