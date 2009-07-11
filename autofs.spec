@@ -22,7 +22,6 @@ Source3:	%{name}-auto.media
 Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
-Patch1:		%{name}-hesiod-includes.patch
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
@@ -99,7 +98,6 @@ trzymanych na serwerze LDAP.
 %prep
 %setup -q
 %patch0 -p1
-%patch1 -p1
 
 %build
 %{__autoconf}
