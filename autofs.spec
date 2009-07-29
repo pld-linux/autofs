@@ -28,8 +28,8 @@ BuildRequires:	bind-devel
 BuildRequires:	bison
 BuildRequires:	e2fsprogs
 BuildRequires:	flex
-BuildRequires:	hesiod-devel
 BuildRequires:	heimdal-devel
+BuildRequires:	hesiod-devel
 BuildRequires:	libxml2-devel
 BuildRequires:	mount
 BuildRequires:	openldap-devel >= 2.4.6
