@@ -163,7 +163,7 @@ fi
 %attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.smb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.tmp
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.var
-%attr(754,root,root) %config /etc/rc.d/init.d/autofs
+%attr(754,root,root) /etc/rc.d/init.d/autofs
 %attr(755,root,root) %{_sbindir}/automount
 %dir /net
 %dir %{_libdir}/autofs
