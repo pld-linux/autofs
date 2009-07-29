@@ -53,9 +53,9 @@ if [ -f /etc/autofs/auto.master ]; then
 		    continue
 		fi
 
-		maptype=`echo $map | cut -f1 -d:`
+		maptype=${map%%:*}
 		if [ "$maptype" = "$map" ]; then
-			map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
+			map=`echo "/etc/autofs/$map" | sed -e 's:^/etc/autofs//:/:'`
 			options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
 			if [ -x $map ]; then
 				echo "$DAEMON --timeout ${TIMEOUT} ${OPTIONS} $dir program $map $options"
@@ -65,10 +65,10 @@ if [ -f /etc/autofs/auto.master ]; then
 				echo "$DAEMON --timeout ${TIMEOUT} ${OPTIONS} $dir `basename $map` $options"
 			fi
 		else
-			map=`echo $map | cut -f2- -d:`
-			if [ ! -z "$map" ]; then
+			map=${map#*/}
+			if [ "$map" ]; then
 				if [ "$maptype" = "file" ]; then
-					map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
+					map=`echo "/etc/autofs/$map" | sed -e 's:^/etc/autofs//:/:'`
 				fi
 				echo "$DAEMON --timeout $TIMEOUT ${OPTIONS} $dir $maptype $map $options"
 			fi
