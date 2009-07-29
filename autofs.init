@@ -47,10 +47,14 @@ getmounts()
 if [ -f /etc/autofs/auto.master ]; then
 	cat /etc/autofs/auto.master | sed -e '/^#/d' -e '/^$/d'| (
 	while read dir map options; do
-		if [ ! -z "$dir" -a ! -z "$map" \
-		   -a x`echo "$map" | cut -c1` != 'x-' ]; then
-			maptype=`echo $map | cut -f1 -d:`
-			if [ "$maptype" = "$map" ]; then
+		if [ ! -z "$dir" -a ! -z "$map" -a x`echo "$map" | cut -c1` != 'x-' ]; then
+		    :
+		else
+		    continue
+		fi
+
+		maptype=`echo $map | cut -f1 -d:`
+		if [ "$maptype" = "$map" ]; then
 			map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
 			options=`echo "$options" | sed -e 's/\(^\|[ \t]\)-/\1/g'`
 			if [ -x $map ]; then
@@ -60,14 +64,13 @@ if [ -f /etc/autofs/auto.master ]; then
 			else
 				echo "$DAEMON --timeout ${TIMEOUT} ${OPTIONS} $dir `basename $map` $options"
 			fi
-			else
-				map=`echo $map | cut -f2- -d:`
-				if [ ! -z "$map" ]; then
-					if [ "$maptype" = "file" ]; then
-						map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
-					fi
-					echo "$DAEMON --timeout $TIMEOUT ${OPTIONS} $dir $maptype $map $options"
+		else
+			map=`echo $map | cut -f2- -d:`
+			if [ ! -z "$map" ]; then
+				if [ "$maptype" = "file" ]; then
+					map=`echo "/etc/autofs/$map" | sed -e 's:^/etc\/autofs//:/:'`
 				fi
+				echo "$DAEMON --timeout $TIMEOUT ${OPTIONS} $dir $maptype $map $options"
 			fi
 		fi
 	done
@@ -131,10 +134,10 @@ RETVAL=0
 # See how we were called.
 case "$1" in
   start)
-  	start
+	start
 	;;
   stop)
-  	stop
+	stop
 	;;
   restart|force-reload)
 	stop
