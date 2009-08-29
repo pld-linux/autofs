@@ -1,0 +1,39 @@
+autofs-5.0.4 - fix incorrect dclist free
+
+From: Ian Kent <raven@themaw.net>
+
+We incorrectly try to free dclist in modules/lookup_ldap.c:find_server().
+---
+
+ modules/lookup_ldap.c |   10 ++++++++--
+ 1 files changed, 8 insertions(+), 2 deletions(-)
+
+
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index f6b3f42..8f352d6 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -688,6 +688,10 @@ static LDAP *find_server(unsigned logopt, struct lookup_context *ctxt)
+ 			}
+ 		}
+ 		if (!uri) {
++			if (dclist) {
++				free_dclist(dclist);
++				dclist = NULL;
++			}
+ 			p = p->next;
+ 			continue;
+ 		}
+@@ -700,8 +704,10 @@ static LDAP *find_server(unsigned logopt, struct lookup_context *ctxt)
+ 		}
+ 		free(uri);
+ 		uri = NULL;
+-		free_dclist(dclist);
+-		dclist = NULL;
++		if (dclist) {
++			free_dclist(dclist);
++			dclist = NULL;
++		}
+ 		p = p->next;
+ 	}
+ 

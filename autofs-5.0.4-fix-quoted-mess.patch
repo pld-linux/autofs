@@ -1,0 +1,38 @@
+autofs-5.0.4 - clear the quoted flag after each character
+
+From: Jeff Moyer <jmoyer@redhat.com>
+
+This regression was introduced by autofs-5.0.4-fix-select-fd-limit.patch.
+The fix is to clear the quoted flag after processing each character from
+program map input.
+---
+
+ CHANGELOG                |    1 +
+ modules/lookup_program.c |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 912c088..af77b55 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -7,6 +7,7 @@
+ - fix select(2) fd limit.
+ - make hash table scale to thousands of entries (Paul Wankadia,
+   Valerie Aurora Henson).
++- clear the quoted flag after each character from program map input.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/modules/lookup_program.c b/modules/lookup_program.c
+index f62d3ef..9878936 100644
+--- a/modules/lookup_program.c
++++ b/modules/lookup_program.c
+@@ -341,6 +341,7 @@ cont:
+ 				/* Eat characters till there's no more output */
+ 				break;
+ 			}
++			quoted = 0;
+ 			goto cont;
+ 		}
+ 		quoted = 0;

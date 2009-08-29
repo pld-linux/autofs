@@ -1,0 +1,47 @@
+autofs-5.0.4 - fix rpc fd leak
+
+From: Ian Kent <raven@themaw.net>
+
+Recent changes which introduced the ability to handle to cope with
+IPv6 addresses causes a file descriptor leak in the RPC library.
+---
+
+ CHANGELOG      |    1 +
+ lib/rpc_subs.c |   11 -----------
+ 2 files changed, 1 insertions(+), 11 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 3fd97d3..7f27f5e 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -56,6 +56,7 @@
+ - fix double free in sasl_bind().
+ - mannual umount recovery fixes.
+ - fix map type info parse error.
++- fix an RPC fd leak.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/lib/rpc_subs.c b/lib/rpc_subs.c
+index d034b29..cafc775 100644
+--- a/lib/rpc_subs.c
++++ b/lib/rpc_subs.c
+@@ -253,17 +253,6 @@ static CLIENT *rpc_do_create_client(struct sockaddr *addr, struct conn_info *inf
+ 		return NULL;
+ 	}
+ 
+-	if (!info->client) {
+-		*fd = open_sock(addr->sa_family, type, proto);
+-		if (*fd < 0)
+-			return NULL;
+-
+-		if (bind(*fd, laddr, slen) < 0) {
+-			close(*fd);
+-			return NULL;
+-		}
+-	}
+-
+ 	switch (info->proto->p_proto) {
+ 	case IPPROTO_UDP:
+ 		if (!info->client) {

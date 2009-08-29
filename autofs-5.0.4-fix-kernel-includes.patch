@@ -1,0 +1,103 @@
+autofs-5.0.4 - fix kernel includes
+
+From: Valerie Aurora Henson <vaurora@redhat.com>
+
+autofs_dev-ioctl.h is included by both the kernel module and autofs,
+and it includes two kernel header files. The compile worked if the
+kernel headers were installed but failed otherwise.
+
+imk: there are a couple of other instances were we include kernel
+headers. I've tried to fix that up too.
+---
+
+ CHANGELOG                      |    1 +
+ include/automount.h            |    3 +--
+ include/dev-ioctl-lib.h        |    3 +--
+ include/linux/auto_dev-ioctl.h |    7 ++++++-
+ include/linux/auto_fs.h        |    6 ++++--
+ 5 files changed, 13 insertions(+), 7 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index a42dd14..387af5e 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -42,6 +42,7 @@
+ - zero s_magic is valid.
+ - use percent hack for master map keys.
+ - use intr option as hosts mount default.
++- fix kernel includes.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/include/automount.h b/include/automount.h
+index 615e07d..d4675bd 100644
+--- a/include/automount.h
++++ b/include/automount.h
+@@ -8,12 +8,11 @@
+ #ifndef AUTOMOUNT_H
+ #define AUTOMOUNT_H
+ 
+-#include <sys/types.h>
+ #include <paths.h>
+ #include <limits.h>
+ #include <time.h>
+ #include <syslog.h>
+-#include <linux/types.h>
++#include <sys/types.h>
+ #include <pthread.h>
+ #include <sched.h>
+ #include <errno.h>
+diff --git a/include/dev-ioctl-lib.h b/include/dev-ioctl-lib.h
+index b7b8211..6d35da2 100644
+--- a/include/dev-ioctl-lib.h
++++ b/include/dev-ioctl-lib.h
+@@ -21,8 +21,7 @@
+ #ifndef AUTOFS_DEV_IOCTL_LIB_H
+ #define AUTOFS_DEV_IOCTL_LIB_H
+ 
+-#include <sys/types.h>
+-#include "linux/auto_dev-ioctl.h"
++#include <linux/auto_dev-ioctl.h>
+ 
+ #define CONTROL_DEVICE  "/dev/autofs"
+ 
+diff --git a/include/linux/auto_dev-ioctl.h b/include/linux/auto_dev-ioctl.h
+index 91a7739..850f39b 100644
+--- a/include/linux/auto_dev-ioctl.h
++++ b/include/linux/auto_dev-ioctl.h
+@@ -10,8 +10,13 @@
+ #ifndef _LINUX_AUTO_DEV_IOCTL_H
+ #define _LINUX_AUTO_DEV_IOCTL_H
+ 
++#include <linux/auto_fs.h>
++
++#ifdef __KERNEL__
+ #include <linux/string.h>
+-#include <linux/types.h>
++#else
++#include <string.h>
++#endif /* __KERNEL__ */
+ 
+ #define AUTOFS_DEVICE_NAME		"autofs"
+ 
+diff --git a/include/linux/auto_fs.h b/include/linux/auto_fs.h
+index bd39f09..91d414f 100644
+--- a/include/linux/auto_fs.h
++++ b/include/linux/auto_fs.h
+@@ -17,11 +17,13 @@
+ #ifdef __KERNEL__
+ #include <linux/fs.h>
+ #include <linux/limits.h>
++#include <linux/types.h>
++#include <linux/ioctl.h>
++#else
+ #include <asm/types.h>
++#include <sys/ioctl.h>
+ #endif /* __KERNEL__ */
+ 
+-#include <linux/ioctl.h>
+-
+ /* This file describes autofs v3 */
+ #define AUTOFS_PROTO_VERSION	3
+ 

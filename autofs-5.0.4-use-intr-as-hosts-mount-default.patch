@@ -1,0 +1,82 @@
+autofs-5.0.4 - use intr option as hosts mount default
+
+From: Ian Kent <raven@themaw.net>
+
+Use the "intr" option as default mount option for the hosts map
+unless explicily overridden.
+---
+
+ CHANGELOG            |    1 +
+ man/auto.master.5.in |    5 +++--
+ modules/parse_sun.c  |   11 +++++++----
+ 3 files changed, 11 insertions(+), 6 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 8258e00..a42dd14 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -41,6 +41,7 @@
+ - reset flex scanner when setting buffer.
+ - zero s_magic is valid.
+ - use percent hack for master map keys.
++- use intr option as hosts mount default.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/man/auto.master.5.in b/man/auto.master.5.in
+index aaa6324..7b7004f 100644
+--- a/man/auto.master.5.in
++++ b/man/auto.master.5.in
+@@ -208,8 +208,9 @@ For example, with an entry in the master map of
+ accessing /net/myserver will mount exports from myserver on directories below
+ /net/myserver.
+ .P
+-NOTE: mounts done from a hosts map will be mounted with the "nosuid" and "nodev" options
+-unless the options "suid" and "dev" are explicitly given in the master map entry.
++NOTE: mounts done from a hosts map will be mounted with the "nosuid,nodev,intr" options
++unless overridden by explicily specifying the "suid", "dev" or "nointr" options in the
++master map entry.
+ .SH LDAP MAPS
+ If the map type \fBldap\fP is specified the mapname is of the form
+ \fB[//servername/]dn\fP, where the optional \fBservername\fP is
+diff --git a/modules/parse_sun.c b/modules/parse_sun.c
+index 65417e1..db36ae2 100644
+--- a/modules/parse_sun.c
++++ b/modules/parse_sun.c
+@@ -607,9 +607,10 @@ static int sun_mount(struct autofs_point *ap, const char *root,
+ 			int len = strlen(options);
+ 			int suid = strstr(options, "suid") ? 0 : 7;
+ 			int dev = strstr(options, "dev") ? 0 : 6;
++			int nointr = strstr(options, "nointr") ? 0 : 5;
+ 
+-			if (suid || dev) {
+-				char *tmp = alloca(len + suid + dev + 1);
++			if (suid || dev || nointr) {
++				char *tmp = alloca(len + suid + dev + nointr + 1);
+ 				if (!tmp) {
+ 					error(ap->logopt, MODPREFIX
+ 					      "alloca failed for options");
+@@ -623,10 +624,12 @@ static int sun_mount(struct autofs_point *ap, const char *root,
+ 					strcat(tmp, ",nosuid");
+ 				if (dev)
+ 					strcat(tmp, ",nodev");
++				if (nointr)
++					strcat(tmp, ",intr");
+ 				options = tmp;
+ 			}
+ 		} else {
+-			char *tmp = alloca(13);
++			char *tmp = alloca(18);
+ 			if (!tmp) {
+ 				error(ap->logopt,
+ 				      MODPREFIX "alloca failed for options");
+@@ -634,7 +637,7 @@ static int sun_mount(struct autofs_point *ap, const char *root,
+ 					return -1;
+ 				return 1;
+ 			}
+-			strcpy(tmp, "nosuid,nodev");
++			strcpy(tmp, "nosuid,nodev,intr");
+ 			options = tmp;
+ 		}
+ 	}

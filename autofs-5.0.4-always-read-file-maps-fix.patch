@@ -1,0 +1,61 @@
+autofs-5.0.4 - always read file maps fix
+
+From: Ian Kent <raven@themaw.net>
+
+If map instances are present for a map source then either we have
+plus included entries or we are looking through a list of nsswitch
+sources. In either case we cannot avoid reading through the map
+because we must preserve the key lookup order over multiple sources.
+But also, we can't know if a source instance has been changed since
+the last time we checked it until we preform a lookup against it.
+So, in this case a lookup within the internal cache cannot be relied
+upon to find the key we're looking for. At least, when we get to the
+file source instance itself, the lookup for the key will be done from
+the cache.
+---
+
+ CHANGELOG             |    1 +
+ modules/lookup_file.c |   17 ++++++++++++++---
+ 2 files changed, 15 insertions(+), 3 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index aab3209..da7ecbf 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -31,6 +31,7 @@
+ - fix double free in expire_proc().
+ - another easy alloca replacements fix.
+ - add LSB init script parameter block.
++- fix file map lookup when reading included or nsswitch sources.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/modules/lookup_file.c b/modules/lookup_file.c
+index ec78090..bd30bc5 100644
+--- a/modules/lookup_file.c
++++ b/modules/lookup_file.c
+@@ -998,9 +998,20 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 		cache_readlock(mc);
+ 		me = cache_lookup_first(mc);
+-		if (me && st.st_mtime <= me->age)
+-			goto do_cache_lookup;
+-		else
++		if (me && st.st_mtime <= me->age) {
++			/*
++			 * If any map instances are present for this source
++			 * then either we have plus included entries or we
++			 * are looking through the list of nsswitch sources.
++			 * In either case we cannot avoid reading through the
++			 * map because we must preserve the key order over
++			 * multiple sources. But also, we can't know, at this
++			 * point, if a source instance has been changed since
++			 * the last time we checked it.
++			 */
++			if (!source->instance)
++				goto do_cache_lookup;
++		} else
+ 			source->stale = 1;
+ 
+ 		me = cache_lookup_distinct(mc, key);

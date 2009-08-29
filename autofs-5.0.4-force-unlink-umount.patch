@@ -1,0 +1,235 @@
+autofs-5.0.4 - force unlink umount at startup
+
+From: Ian Kent <raven@themaw.net>
+
+Version 5.0.3 autofs would unlink existing mounts at startup. This
+functioned OK most of the time but caused processes whose working
+directory was within unlinked automounted directories to not get a
+correct pwd reported by the system.
+
+There can be situations where the unlink umounting is desirable, such
+as when the daemon is forceably killed and we want to get rid of any
+existing mounts at startup. This change provides a way to force this
+old behavior by passing the "--force" option to the daemon. This can
+also be done by using the "forcestart" and "forcerestart" actions to
+the init script.
+
+Note that the old behavior will always be used if the kernel does not
+include the iotcl re-implementation which provides the ability to
+re-connect to existing mounts.
+---
+
+ CHANGELOG             |    2 ++
+ daemon/automount.c    |   14 +++++++++++++-
+ daemon/direct.c       |    2 +-
+ daemon/indirect.c     |    2 +-
+ include/automount.h   |    3 +++
+ man/automount.8       |   13 +++++++++++++
+ redhat/autofs.init.in |   10 +++++++++-
+ samples/rc.autofs.in  |   10 +++++++++-
+ 8 files changed, 51 insertions(+), 5 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 7dee674..d4dd70b 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -12,6 +12,8 @@
+ - fix hosts map use after free.
+ - fix uri list locking (again).
+ - check for stale SASL credentials upon connect fail.
++- add "forcestart" and "forcerestart" init script options to allow
++  use of 5.0.3 strartup behavior if required.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/daemon/automount.c b/daemon/automount.c
+index f04273f..e20e7c9 100644
+--- a/daemon/automount.c
++++ b/daemon/automount.c
+@@ -57,6 +57,7 @@ static char *pid_file = NULL;		/* File in which to keep pid */
+ unsigned int global_random_selection;	/* use random policy when selecting
+ 					 * which multi-mount host to mount */
+ long global_negative_timeout = -1;
++int do_force_unlink = 0;		/* Forceably unlink mount tree at startup */
+ 
+ static int start_pipefd[2];
+ static int st_stat = 0;
+@@ -1798,6 +1799,7 @@ int main(int argc, char *argv[])
+ 		{"version", 0, 0, 'V'},
+ 		{"set-log-priority", 1, 0, 'l'},
+ 		{"dont-check-daemon", 0, 0, 'C'},
++		{"force", 0, 0, 'F'},
+ 		{0, 0, 0, 0}
+ 	};
+ 
+@@ -1819,7 +1821,7 @@ int main(int argc, char *argv[])
+ 	daemon_check = 1;
+ 
+ 	opterr = 0;
+-	while ((opt = getopt_long(argc, argv, "+hp:t:vdD:fVrO:l:n:C", long_options, NULL)) != EOF) {
++	while ((opt = getopt_long(argc, argv, "+hp:t:vdD:fVrO:l:n:CF", long_options, NULL)) != EOF) {
+ 		switch (opt) {
+ 		case 'h':
+ 			usage();
+@@ -1892,6 +1894,10 @@ int main(int argc, char *argv[])
+ 			daemon_check = 0;
+ 			break;
+ 
++		case 'F':
++			do_force_unlink = 1;
++			break;
++
+ 		case '?':
+ 		case ':':
+ 			printf("%s: Ambiguous or unknown options\n", program);
+@@ -2066,6 +2072,12 @@ int main(int argc, char *argv[])
+ 		exit(3);
+ 	}
+ 
++	/*
++	 * Mmm ... reset force unlink umount so we don't also do this
++	 * in future when we receive a HUP signal.
++	 */
++	do_force_unlink = 0;
++
+ 	res = write(start_pipefd[1], pst_stat, sizeof(*pst_stat));
+ 	close(start_pipefd[1]);
+ 
+diff --git a/daemon/direct.c b/daemon/direct.c
+index d9dda3d..2d979f1 100644
+--- a/daemon/direct.c
++++ b/daemon/direct.c
+@@ -335,7 +335,7 @@ int do_mount_autofs_direct(struct autofs_point *ap, struct mnt_list *mnts, struc
+ 	/* Calculate the timeouts */
+ 	ap->exp_runfreq = (timeout + CHECK_RATIO - 1) / CHECK_RATIO;
+ 
+-	if (ops->version) {
++	if (ops->version && !do_force_unlink) {
+ 		ap->flags |= MOUNT_FLAG_REMOUNT;
+ 		ret = try_remount(ap, me, t_direct);
+ 		ap->flags &= ~MOUNT_FLAG_REMOUNT;
+diff --git a/daemon/indirect.c b/daemon/indirect.c
+index 0721707..2ccbc53 100644
+--- a/daemon/indirect.c
++++ b/daemon/indirect.c
+@@ -97,7 +97,7 @@ static int do_mount_autofs_indirect(struct autofs_point *ap, const char *root)
+ 
+ 	ap->exp_runfreq = (timeout + CHECK_RATIO - 1) / CHECK_RATIO;
+ 
+-	if (ops->version) {
++	if (ops->version && !do_force_unlink) {
+ 		ap->flags |= MOUNT_FLAG_REMOUNT;
+ 		ret = try_remount(ap, NULL, t_indirect);
+ 		ap->flags &= ~MOUNT_FLAG_REMOUNT;
+diff --git a/include/automount.h b/include/automount.h
+index 46cb6c6..1f14d5b 100644
+--- a/include/automount.h
++++ b/include/automount.h
+@@ -428,6 +428,9 @@ struct autofs_point {
+ 	struct list_head submounts;	/* List of child submounts */
+ };
+ 
++/* Foreably unlink existing mounts at startup. */
++extern int do_force_unlink;
++
+ /* Standard functions used by daemon or modules */
+ 
+ #define	MOUNT_OFFSET_OK		0
+diff --git a/man/automount.8 b/man/automount.8
+index d9285bf..9fcaaf4 100644
+--- a/man/automount.8
++++ b/man/automount.8
+@@ -84,6 +84,11 @@ path name as specified in the master map.
+ .TP
+ .I "\-C, \-\-dont-check-daemon"
+ Don't check if the daemon is currently running (see NOTES).
++.TP
++.I "\-F, \-\-force"
++Force an unlink umount of existing mounts under autofs managed mount points
++during startup. This can cause problems for processes with working directories
++within these mounts (see NOTES).
+ .SH ARGUMENTS
+ \fBautomount\fP takes one optional argument, the name of the master map to
+ use.
+@@ -132,6 +137,14 @@ for certain types of automount maps. The mounts of the seperate daemons
+ might interfere with one another. The implications of running multiple
+ daemon instances needs to be checked and tested before we can say this
+ is supported.
++.P
++If the option to force an unlink of mounts at startup is used then processes
++whose working directory is within unlinked automounted directories will not
++get the correct pwd from the system. This is because, after the mount is
++unlinked from the mount tree, anything that needs to walk back up the mount
++tree to construct a path, such as getcwd(2) and the proc filesystem
++/proc/<pid>/cwd, cannot work because the point from which the path is
++constructed has been detached from the mount tree.
+ .SH "SEE ALSO"
+ .BR autofs (5),
+ .BR autofs (8),
+diff --git a/redhat/autofs.init.in b/redhat/autofs.init.in
+index 65c786e..471667e 100644
+--- a/redhat/autofs.init.in
++++ b/redhat/autofs.init.in
+@@ -137,6 +137,10 @@ case "$1" in
+ 	start)
+ 		start
+ 		;;
++	forcestart)
++		OPTIONS="$OPTIONS --force"
++		start
++		;;
+ 	stop)
+ 		stop
+ 		;;
+@@ -146,6 +150,10 @@ case "$1" in
+ 	restart)
+ 		restart
+ 		;;
++	forcerestart)
++		OPTIONS="$OPTIONS --force"
++		restart
++		;;
+ 	reload)
+ 		reload
+ 		;;
+@@ -155,7 +163,7 @@ case "$1" in
+ 		fi
+ 		;;
+ 	*)
+-		echo $"Usage: $0 {start|stop|status|restart|reload|condrestart}"
++		echo $"Usage: $0 {start|forcestart|stop|status|restart|orcerestart|reload|condrestart}"
+ 		exit 1;
+ 		;;
+ esac
+diff --git a/samples/rc.autofs.in b/samples/rc.autofs.in
+index 51f5b02..2877fe2 100644
+--- a/samples/rc.autofs.in
++++ b/samples/rc.autofs.in
+@@ -117,17 +117,25 @@ case "$1" in
+ 	start)
+ 		start
+ 		;;
++	forcestart)
++		OPTIONS="$OPTIONS --force"
++		start
++		;;
+ 	stop)
+ 		stop
+ 		;;
+ 	restart)
+ 		restart
+ 		;;
++	forcerestart)
++		OPTIONS="$OPTIONS --force"
++		restart
++		;;
+ 	reload)
+ 		reload
+ 		;;
+ 	*)
+-		echo $"Usage: $0 {start|stop|restart|reload}"
++		echo $"Usage: $0 {start|forcestart|stop|restart|forcerestart|reload}"
+ 		exit 1;
+ 		;;
+ esac

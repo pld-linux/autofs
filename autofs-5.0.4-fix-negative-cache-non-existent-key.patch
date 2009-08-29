@@ -1,0 +1,331 @@
+autofs-5.0.4 - fix negative cache non-existent key
+
+From: Ian Kent <raven@themaw.net>
+
+autofs was not recording map entries that don't exist for negative
+caching. This was causing unwanted network map lookups.
+---
+
+ CHANGELOG                |    1 +
+ daemon/lookup.c          |   48 ++++++++++++++++++++++++++++++++++++++++++++--
+ modules/lookup_file.c    |   20 ++++++++++++-------
+ modules/lookup_hosts.c   |   21 ++++++++++++++++----
+ modules/lookup_ldap.c    |   20 ++++++++++++-------
+ modules/lookup_nisplus.c |   19 ++++++++++++------
+ modules/lookup_program.c |   35 ++++++++++++++++++++++++++--------
+ modules/lookup_yp.c      |   19 ++++++++++++------
+ 8 files changed, 143 insertions(+), 40 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 88ca579..bd35b00 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -2,6 +2,7 @@
+ -----------------------
+ - fix dumb libxml2 check
+ - fix nested submount expire deadlock.
++- fix negative caching for non-existent map keys.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/daemon/lookup.c b/daemon/lookup.c
+index 803df4f..0cf6e3f 100644
+--- a/daemon/lookup.c
++++ b/daemon/lookup.c
+@@ -804,6 +804,45 @@ static enum nsswitch_status lookup_map_name(struct nss_source *this,
+ 	return result;
+ }
+ 
++static void update_negative_cache(struct autofs_point *ap, struct map_source *source, const char *name)
++{
++	struct master_mapent *entry = ap->entry;
++	struct map_source *map;
++	struct mapent *me;
++
++	/* Have we recorded the lookup fail for negative caching? */
++	me = lookup_source_mapent(ap, name, LKP_DISTINCT);
++	if (me)
++		/*
++		 *  Already exists in the cache, the mount fail updates
++		 *  will update negative timeout status.
++		 */
++		cache_unlock(me->mc);
++	else {
++		/* Notify only once after fail */
++		error(ap->logopt, "key \"%s\" not found in map.", name);
++
++		/* Doesn't exist in any source, just add it somewhere */
++		if (source)
++			map = source;
++		else
++			map = entry->maps;
++		if (map) {
++			time_t now = time(NULL);
++			int rv = CHE_FAIL;
++
++			cache_writelock(map->mc);
++			rv = cache_update(map->mc, map, name, NULL, now);
++			if (rv != CHE_FAIL) {
++				me = cache_lookup_distinct(map->mc, name);
++				me->status = now + ap->negative_timeout;
++			}
++			cache_unlock(map->mc);
++		}
++	}
++	return;
++}
++
+ int lookup_nss_mount(struct autofs_point *ap, struct map_source *source, const char *name, int name_len)
+ {
+ 	struct master_mapent *entry = ap->entry;
+@@ -907,8 +946,13 @@ int lookup_nss_mount(struct autofs_point *ap, struct map_source *source, const c
+ 		send_map_update_request(ap);
+ 	pthread_cleanup_pop(1);
+ 
+-	if (result == NSS_STATUS_NOTFOUND)
+-		error(ap->logopt, "key \"%s\" not found in map.", name);
++	/*
++	 * The last source lookup will return NSS_STATUS_NOTFOUND if the
++	 * map exits and the key has not been found but the map may also
++	 * not exist in which case the key is also not found.
++	 */
++	if (result == NSS_STATUS_NOTFOUND || result == NSS_STATUS_UNAVAIL)
++		update_negative_cache(ap, source, name);
+ 
+ 	return !result;
+ }
+diff --git a/modules/lookup_file.c b/modules/lookup_file.c
+index 807ceab..9e34b72 100644
+--- a/modules/lookup_file.c
++++ b/modules/lookup_file.c
+@@ -1069,14 +1069,20 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 
+-	/* Check if we recorded a mount fail for this key */
+-	cache_readlock(mc);
+-	me = cache_lookup_distinct(mc, key);
+-	if (me && me->status >= time(NULL)) {
+-		cache_unlock(mc);
+-		return NSS_STATUS_UNAVAIL;
++	/* Check if we recorded a mount fail for this key anywhere */
++	me = lookup_source_mapent(ap, key, LKP_DISTINCT);
++	if (me) {
++		if (me->status >= time(NULL)) {
++			cache_unlock(me->mc);
++			return NSS_STATUS_NOTFOUND;
++		}
++
++		/* Negative timeout expired for non-existent entry. */
++		if (!me->mapent)
++			cache_delete(me->mc, key);
++
++		cache_unlock(me->mc);
+ 	}
+-	cache_unlock(mc);
+ 
+ 	/*
+ 	 * We can't check the direct mount map as if it's not in
+diff --git a/modules/lookup_hosts.c b/modules/lookup_hosts.c
+index bf24d7f..f8d4269 100644
+--- a/modules/lookup_hosts.c
++++ b/modules/lookup_hosts.c
+@@ -136,12 +136,25 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 	mc = source->mc;
+ 
++	/* Check if we recorded a mount fail for this key anywhere */
++	me = lookup_source_mapent(ap, name, LKP_DISTINCT);
++	if (me) {
++		if (me->status >= time(NULL)) {
++			cache_unlock(me->mc);
++			return NSS_STATUS_NOTFOUND;
++		}
++
++		if (!me->mapent) {
++			cache_delete(me->mc, name);
++			me = NULL;
++		}
++
++		cache_unlock(me->mc);
++	}
++
+ 	cache_readlock(mc);
+ 	me = cache_lookup_distinct(mc, name);
+-	if (me && me->status >= time(NULL)) {
+-		cache_unlock(mc);
+-		return NSS_STATUS_NOTFOUND;
+-	} else if (!me) {
++	if (!me) {
+ 		cache_unlock(mc);
+ 		/*
+ 		 * We haven't read the list of hosts into the
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index 31c2c13..42c3235 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -2709,14 +2709,20 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 
+-	/* Check if we recorded a mount fail for this key */
+-	cache_readlock(mc);
+-	me = cache_lookup_distinct(mc, key);
+-	if (me && me->status >= time(NULL)) {
+-		cache_unlock(mc);
+-		return NSS_STATUS_NOTFOUND;
++	/* Check if we recorded a mount fail for this key anywhere */
++	me = lookup_source_mapent(ap, key, LKP_DISTINCT);
++	if (me) {
++		if (me->status >= time(NULL)) {
++			cache_unlock(me->mc);
++			return NSS_STATUS_NOTFOUND;
++		}
++
++		/* Negative timeout expired for non-existent entry. */
++		if (!me->mapent)
++			cache_delete(me->mc, key);
++
++		cache_unlock(me->mc);
+ 	}
+-	cache_unlock(mc);
+ 
+         /*
+ 	 * We can't check the direct mount map as if it's not in
+diff --git a/modules/lookup_nisplus.c b/modules/lookup_nisplus.c
+index 755556d..f15465f 100644
+--- a/modules/lookup_nisplus.c
++++ b/modules/lookup_nisplus.c
+@@ -493,13 +493,20 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 
+-	cache_readlock(mc);
+-	me = cache_lookup_distinct(mc, key);
+-	if (me && me->status >= time(NULL)) {
+-		cache_unlock(mc);
+-		return NSS_STATUS_NOTFOUND;
++	/* Check if we recorded a mount fail for this key anywhere */
++	me = lookup_source_mapent(ap, key, LKP_DISTINCT);
++	if (me) {
++		if (me->status >= time(NULL)) {
++			cache_unlock(me->mc);
++			return NSS_STATUS_NOTFOUND;
++		}
++
++		/* Negative timeout expired for non-existent entry. */
++		if (!me->mapent)
++			cache_delete(me->mc, key);
++
++		cache_unlock(me->mc);
+ 	}
+-	cache_unlock(mc);
+ 
+ 	/*
+ 	 * We can't check the direct mount map as if it's not in
+diff --git a/modules/lookup_program.c b/modules/lookup_program.c
+index daf874d..bf32d3b 100644
+--- a/modules/lookup_program.c
++++ b/modules/lookup_program.c
+@@ -131,13 +131,25 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 
+ 	mc = source->mc;
+ 
++	/* Check if we recorded a mount fail for this key anywhere */
++	me = lookup_source_mapent(ap, name, LKP_DISTINCT);
++	if (me) {
++		if (me->status >= time(NULL)) {
++			cache_unlock(me->mc);
++			return NSS_STATUS_NOTFOUND;
++		}
++
++		/* Negative timeout expired for non-existent entry. */
++		if (!me->mapent)
++			cache_delete(me->mc, name);
++
++		cache_unlock(me->mc);
++	}
++
+ 	/* Catch installed direct offset triggers */
+-	cache_readlock(mc);
++	cache_writelock(mc);
+ 	me = cache_lookup_distinct(mc, name);
+-	if (me && me->status >= time(NULL)) {
+-		cache_unlock(mc);
+-		return NSS_STATUS_NOTFOUND;
+-	} else if (!me) {
++	if (!me) {
+ 		cache_unlock(mc);
+ 		/*
+ 		 * If there's a '/' in the name and the offset is not in
+@@ -149,8 +161,6 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 			return NSS_STATUS_NOTFOUND;
+ 		}
+ 	} else {
+-		cache_unlock(mc);
+-
+ 		/* Otherwise we found a valid offset so try mount it */
+ 		debug(ap->logopt, MODPREFIX "%s -> %s", name, me->mapent);
+ 
+@@ -163,19 +173,28 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 		 */
+ 		if (strchr(name, '/') ||
+ 		    me->age + ap->negative_timeout > time(NULL)) {
++			char *ent = NULL;
++
++			if (me->mapent) {
++				ent = alloca(strlen(me->mapent) + 1);
++				strcpy(ent, me->mapent);
++			}
++			cache_unlock(mc);
+ 			master_source_current_wait(ap->entry);
+ 			ap->entry->current = source;
+ 			ret = ctxt->parse->parse_mount(ap, name,
+-				 name_len, me->mapent, ctxt->parse->context);
++				 name_len, ent, ctxt->parse->context);
+ 			goto out_free;
+ 		} else {
+ 			if (me->multi) {
++				cache_unlock(mc);
+ 				warn(ap->logopt, MODPREFIX
+ 				     "unexpected lookup for active multi-mount"
+ 				     " key %s, returning fail", name);
+ 				return NSS_STATUS_UNAVAIL;
+ 			}
+ 			cache_delete(mc, name);
++			cache_unlock(mc);
+ 		}
+ 	}
+ 
+diff --git a/modules/lookup_yp.c b/modules/lookup_yp.c
+index 8b6408b..1b62f57 100644
+--- a/modules/lookup_yp.c
++++ b/modules/lookup_yp.c
+@@ -603,13 +603,20 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 	if (key_len > KEY_MAX_LEN)
+ 		return NSS_STATUS_NOTFOUND;
+ 
+-	cache_readlock(mc);
+-	me = cache_lookup_distinct(mc, key);
+-	if (me && me->status >= time(NULL)) {
+-		cache_unlock(mc);
+-		return NSS_STATUS_NOTFOUND;
++	/* Check if we recorded a mount fail for this key anywhere */
++	me = lookup_source_mapent(ap, key, LKP_DISTINCT);
++	if (me) {
++		if (me->status >= time(NULL)) {
++			cache_unlock(me->mc);
++			return NSS_STATUS_NOTFOUND;
++		}
++
++		/* Negative timeout expired for non-existent entry. */
++		if (!me->mapent)
++			cache_delete(me->mc, key);
++
++		cache_unlock(me->mc);
+ 	}
+-	cache_unlock(mc);
+ 
+ 	 /*
+ 	  * We can't check the direct mount map as if it's not in

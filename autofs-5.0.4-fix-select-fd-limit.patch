@@ -1,0 +1,275 @@
+autofs-5.0.4 - fix select fd limit
+
+From: Ian Kent <raven@themaw.net>
+
+Using a large number of direct mounts causes autofs to hang. This is
+because select(2) is limited to 1024 file handles (usually). To resolve
+this we need to convert calls to select(2) to use poll(2).
+---
+
+ CHANGELOG                |    1 +
+ daemon/spawn.c           |   19 ++++++------
+ lib/rpc_subs.c           |   32 ++++++++++++++------
+ modules/lookup_program.c |   74 +++++++++++++++++++++++++++-------------------
+ 4 files changed, 78 insertions(+), 48 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 43f3205..0fb7db5 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -4,6 +4,7 @@
+ - fix nested submount expire deadlock.
+ - fix negative caching for non-existent map keys.
+ - use CLOEXEC flag.
++- fix select(2) fd limit.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/daemon/spawn.c b/daemon/spawn.c
+index 4ddf46f..e02d926 100644
+--- a/daemon/spawn.c
++++ b/daemon/spawn.c
+@@ -21,6 +21,7 @@
+ #include <sys/types.h>
+ #include <dirent.h>
+ #include <time.h>
++#include <poll.h>
+ #include <sys/wait.h>
+ #include <sys/stat.h>
+ #include <sys/mount.h>
+@@ -89,21 +90,21 @@ void reset_signals(void)
+ 
+ static int timed_read(int pipe, char *buf, size_t len, int time)
+ {
+-	struct timeval timeout = { 0, 0 };
+-	struct timeval *tout = NULL;
+-	fd_set wset, rset;
++	struct pollfd pfd[1];
++	int timeout = time;
+ 	int ret;
+ 
+-	FD_ZERO(&rset);
+-	FD_SET(pipe, &rset);
+-	wset = rset;
++	pfd[0].fd = pipe;
++	pfd[0].events = POLLIN;
+ 
+ 	if (time != -1) {
+-		timeout.tv_sec = time;
+-		tout = &timeout;
++		if (time >= (INT_MAX - 1)/1000)
++			timeout = INT_MAX - 1;
++		else
++			timeout = time * 1000;
+ 	}
+ 
+-	ret = select(pipe + 1, &rset, &wset, NULL, tout);
++	ret = poll(pfd, 1, timeout);
+ 	if (ret <= 0) {
+ 		if (ret == 0)
+ 			ret = -ETIMEDOUT;
+diff --git a/lib/rpc_subs.c b/lib/rpc_subs.c
+index 9ac3657..7b347a7 100644
+--- a/lib/rpc_subs.c
++++ b/lib/rpc_subs.c
+@@ -31,6 +31,7 @@
+ #include <sys/ioctl.h>
+ #include <ctype.h>
+ #include <pthread.h>
++#include <poll.h>
+ 
+ #include "mount.h"
+ #include "rpc_subs.h"
+@@ -197,14 +198,15 @@ void rpc_destroy_udp_client(struct conn_info *info)
+ /*
+  *  Perform a non-blocking connect on the socket fd.
+  *
+- *  tout contains the timeout.  It will be modified to contain the time
+- *  remaining (i.e. time provided - time elasped).
++ *  The input struct timeval always has tv_nsec set to zero,
++ *  we only ever use tv_sec for timeouts.
+  */
+ static int connect_nb(int fd, struct sockaddr_in *addr, struct timeval *tout)
+ {
++	struct pollfd pfd[1];
++	int timeout = tout->tv_sec;
+ 	int flags, ret;
+ 	socklen_t len;
+-	fd_set wset, rset;
+ 
+ 	flags = fcntl(fd, F_GETFL, 0);
+ 	if (flags < 0)
+@@ -229,12 +231,10 @@ static int connect_nb(int fd, struct sockaddr_in *addr, struct timeval *tout)
+ 	if (ret == 0)
+ 		goto done;
+ 
+-	/* now wait */
+-	FD_ZERO(&rset);
+-	FD_SET(fd, &rset);
+-	wset = rset;
++	pfd[0].fd = fd;
++	pfd[0].events = POLLOUT;
+ 
+-	ret = select(fd + 1, &rset, &wset, NULL, tout);
++	ret = poll(pfd, 1, timeout);
+ 	if (ret <= 0) {
+ 		if (ret == 0)
+ 			ret = -ETIMEDOUT;
+@@ -243,13 +243,27 @@ static int connect_nb(int fd, struct sockaddr_in *addr, struct timeval *tout)
+ 		goto done;
+ 	}
+ 
+-	if (FD_ISSET(fd, &rset) || FD_ISSET(fd, &wset)) {
++	if (pfd[0].revents) {
+ 		int status;
+ 
+ 		len = sizeof(ret);
+ 		status = getsockopt(fd, SOL_SOCKET, SO_ERROR, &ret, &len);
+ 		if (status < 0) {
++			char buf[MAX_ERR_BUF + 1];
++			char *estr = strerror_r(errno, buf, MAX_ERR_BUF);
++
++			/*
++			 * We assume getsockopt amounts to a read on the
++			 * descriptor and gives us the errno we need for
++			 * the POLLERR revent case.
++			 */
+ 			ret = -errno;
++
++			/* Unexpected case, log it so we know we got caught */
++			if (pfd[0].revents & POLLNVAL)
++				logerr("unexpected poll(2) error on connect:"
++				       " %s", estr);
++
+ 			goto done;
+ 		}
+ 
+diff --git a/modules/lookup_program.c b/modules/lookup_program.c
+index 6f4e2a3..f62d3ef 100644
+--- a/modules/lookup_program.c
++++ b/modules/lookup_program.c
+@@ -24,6 +24,7 @@
+ #include <sys/times.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
++#include <poll.h>
+ 
+ #define MODULE_LOOKUP
+ #include "automount.h"
+@@ -113,14 +114,12 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 	char errbuf[1024], *errp;
+ 	char ch;
+ 	int pipefd[2], epipefd[2];
++	struct pollfd pfd[2];
+ 	pid_t f;
+-	int files_left;
+ 	int status;
+-	fd_set readfds, ourfds;
+ 	enum state { st_space, st_map, st_done } state;
+ 	int quoted = 0;
+ 	int ret = 1;
+-	int max_fd;
+ 	int distance;
+ 	int alloci = 1;
+ 
+@@ -253,30 +252,39 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 	errp = errbuf;
+ 	state = st_space;
+ 
+-	FD_ZERO(&ourfds);
+-	FD_SET(pipefd[0], &ourfds);
+-	FD_SET(epipefd[0], &ourfds);
++	pfd[0].fd = pipefd[0];
++	pfd[0].events = POLLIN;
++	pfd[1].fd = epipefd[0];
++	pfd[1].events = POLLIN;
+ 
+-	max_fd = pipefd[0] > epipefd[0] ? pipefd[0] : epipefd[0];
++	while (1) {
++		int bytes;
+ 
+-	files_left = 2;
++		if (poll(pfd, 2, -1) < 0 && errno != EINTR)
++			break;
++
++		if (pfd[0].fd == -1 && pfd[1].fd == -1)
++			break;
+ 
+-	while (files_left != 0) {
+-		readfds = ourfds;
+-		if (select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0 && errno != EINTR)
++		if ((pfd[0].revents & (POLLIN|POLLHUP)) == POLLHUP &&
++		    (pfd[1].revents & (POLLIN|POLLHUP)) == POLLHUP)
+ 			break;
+ 
+ 		/* Parse maps from stdout */
+-		if (FD_ISSET(pipefd[0], &readfds)) {
+-			if (read(pipefd[0], &ch, 1) < 1) {
+-				FD_CLR(pipefd[0], &ourfds);
+-				files_left--;
++		if (pfd[0].revents) {
++cont:
++			bytes = read(pipefd[0], &ch, 1);
++			if (bytes == 0)
++				goto next;
++			else if (bytes < 0) {
++				pfd[0].fd = -1;
+ 				state = st_done;
++				goto next;
+ 			}
+ 
+ 			if (!quoted && ch == '\\') {
+ 				quoted = 1;
+-				continue;
++				goto cont;
+ 			}
+ 
+ 			switch (state) {
+@@ -333,26 +341,32 @@ int lookup_mount(struct autofs_point *ap, const char *name, int name_len, void *
+ 				/* Eat characters till there's no more output */
+ 				break;
+ 			}
++			goto cont;
+ 		}
+ 		quoted = 0;
+-
++next:
+ 		/* Deal with stderr */
+-		if (FD_ISSET(epipefd[0], &readfds)) {
+-			if (read(epipefd[0], &ch, 1) < 1) {
+-				FD_CLR(epipefd[0], &ourfds);
+-				files_left--;
+-			} else if (ch == '\n') {
+-				*errp = '\0';
+-				if (errbuf[0])
+-					logmsg(">> %s", errbuf);
+-				errp = errbuf;
+-			} else {
+-				if (errp >= &errbuf[1023]) {
++		if (pfd[1].revents) {
++			while (1) {
++				bytes = read(epipefd[0], &ch, 1);
++				if (bytes == 0)
++					break;
++				else if (bytes < 0) {
++					pfd[1].fd = -1;
++					break;
++				} else if (ch == '\n') {
+ 					*errp = '\0';
+-					logmsg(">> %s", errbuf);
++					if (errbuf[0])
++						logmsg(">> %s", errbuf);
+ 					errp = errbuf;
++				} else {
++					if (errp >= &errbuf[1023]) {
++						*errp = '\0';
++						logmsg(">> %s", errbuf);
++						errp = errbuf;
++					}
++					*(errp++) = ch;
+ 				}
+-				*(errp++) = ch;
+ 			}
+ 		}
+ 	}

@@ -1,0 +1,161 @@
+autofs-5.0.4 - improve manual umount recovery
+
+From: Ian Kent <raven@themaw.net>
+
+The check for manually umounted mounts in the expire of direct mounts is
+racy and the check itself is inadequate in that it can incorrectly clear
+the descriptor of an active mount. Also, we do a similar test following
+the expire which is a waste since we can catch this on the next expire.
+So these two tests have been combined and the check done only prior to
+the expire. In the indirect expire we don't have a check at all so we
+add one.
+---
+
+ CHANGELOG         |    1 +
+ daemon/direct.c   |   28 ++++++++++------------------
+ daemon/indirect.c |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 57 insertions(+), 19 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 5e01812..89aaa99 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -45,6 +45,7 @@
+ - fix kernel includes.
+ - dont umount existing direct mount on master re-read.
+ - fix incorrect shutdown introduced by library relaod fixes.
++- improve manual umount recovery.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/daemon/direct.c b/daemon/direct.c
+index 4f4ff20..1ed2b15 100644
+--- a/daemon/direct.c
++++ b/daemon/direct.c
+@@ -881,13 +881,14 @@ void *expire_proc_direct(void *arg)
+ 			 * avoid maintaining a file handle for control
+ 			 * functions as once it's mounted all opens are
+ 			 * directed to the mount not the trigger.
+-			 * But first expire possible rootless offsets first.
+ 			 */
+ 
+-			/* Offsets always have a real mount at their base */
++			/* Check for manual umount */
+ 			cache_writelock(me->mc);
+-			if (strstr(next->opts, "offset")) {
+-				ops->close(ap->logopt, me->ioctlfd);
++			if (me->ioctlfd != -1 && 
++			    fstat(ioctlfd, &st) != -1 &&
++			    !count_mounts(ap->logopt, next->path, st.st_dev)) {
++				ops->close(ap->logopt, ioctlfd);
+ 				me->ioctlfd = -1;
+ 				cache_unlock(me->mc);
+ 				pthread_setcancelstate(cur_state, NULL);
+@@ -904,15 +905,6 @@ void *expire_proc_direct(void *arg)
+ 				continue;
+ 			}
+ 
+-			cache_writelock(me->mc);
+-			if (me->ioctlfd != -1 && 
+-			    fstat(ioctlfd, &st) != -1 &&
+-			    !count_mounts(ap->logopt, next->path, st.st_dev)) {
+-				ops->close(ap->logopt, ioctlfd);
+-				me->ioctlfd = -1;
+-			}
+-			cache_unlock(me->mc);
+-
+ 			pthread_setcancelstate(cur_state, NULL);
+ 			continue;
+ 		}
+@@ -1068,7 +1060,7 @@ int handle_packet_expire_direct(struct autofs_point *ap, autofs_packet_expire_di
+ 	map = ap->entry->maps;
+ 	while (map) {
+ 		mc = map->mc;
+-		cache_readlock(mc);
++		cache_writelock(mc);
+ 		me = cache_lookup_ino(mc, pkt->dev, pkt->ino);
+ 		if (me)
+ 			break;
+@@ -1345,7 +1337,7 @@ int handle_packet_missing_direct(struct autofs_point *ap, autofs_packet_missing_
+ 		}
+ 
+ 		mc = map->mc;
+-		cache_readlock(mc);
++		cache_writelock(mc);
+ 		me = cache_lookup_ino(mc, pkt->dev, pkt->ino);
+ 		if (me)
+ 			break;
+@@ -1367,10 +1359,10 @@ int handle_packet_missing_direct(struct autofs_point *ap, autofs_packet_missing_
+ 
+ 	if (me->ioctlfd != -1) {
+ 		/* Maybe someone did a manual umount, clean up ! */
+-		ioctlfd = me->ioctlfd;
++		close(me->ioctlfd);
+ 		me->ioctlfd = -1;
+-	} else
+-		ops->open(ap->logopt, &ioctlfd, me->dev, me->key);
++	}
++	ops->open(ap->logopt, &ioctlfd, me->dev, me->key);
+ 
+ 	if (ioctlfd == -1) {
+ 		cache_unlock(mc);
+diff --git a/daemon/indirect.c b/daemon/indirect.c
+index 2539282..bc39e63 100644
+--- a/daemon/indirect.c
++++ b/daemon/indirect.c
+@@ -428,8 +428,53 @@ void *expire_proc_indirect(void *arg)
+ 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cur_state);
+ 			if (strstr(next->opts, "indirect"))
+ 				master_notify_submount(ap, next->path, ap->state);
+-			pthread_setcancelstate(cur_state, NULL);
++			else if (strstr(next->opts, "offset")) {
++				struct map_source *map;
++				struct mapent_cache *mc = NULL;
++				struct mapent *me = NULL;
++				struct stat st;
++
++				master_source_readlock(ap->entry);
++
++				map = ap->entry->maps;
++				while (map) {
++					mc = map->mc;
++					cache_writelock(mc);
++					me = cache_lookup_distinct(mc, next->path);
++					if (me)
++						break;
++					cache_unlock(mc);
++					map = map->next;
++				}
+ 
++				if (!mc || !me) {
++					master_source_unlock(ap->entry);
++					pthread_setcancelstate(cur_state, NULL);
++					continue;
++				}
++
++				/* Check for manual umount */
++				if (me->ioctlfd != -1 &&
++				    (fstat(me->ioctlfd, &st) == -1 ||
++				     !count_mounts(ap->logopt, me->key, st.st_dev))) {
++					if (is_mounted(_PROC_MOUNTS, me->key, MNTS_REAL)) {
++						error(ap->logopt,
++						      "error: possible mtab mismatch %s",
++						      me->key);
++						cache_unlock(mc);
++						master_source_unlock(ap->entry);
++						pthread_setcancelstate(cur_state, NULL);
++						continue;
++					}
++					close(me->ioctlfd);
++					me->ioctlfd = -1;
++				}
++
++				cache_unlock(mc);
++				master_source_unlock(ap->entry);
++			}
++
++			pthread_setcancelstate(cur_state, NULL);
+ 			continue;
+ 		}
+ 

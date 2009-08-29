@@ -1,0 +1,55 @@
+autofs-5.0.4 - remount we created mount point fix
+
+From: Ian Kent <raven@themaw.net>
+
+During remount determine if autofs created the mount point directory,
+as best we can.
+---
+
+ CHANGELOG    |    1 +
+ lib/mounts.c |   15 +++++++--------
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 0a0519f..e138ca3 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -52,6 +52,7 @@
+ - use srv query for domain dn.
+ - fix not releasing resources when using submounts.
+ - fix notify mount message path.
++- remount we created mount point fix.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/lib/mounts.c b/lib/mounts.c
+index 4787bb6..4c44982 100644
+--- a/lib/mounts.c
++++ b/lib/mounts.c
+@@ -1359,18 +1359,17 @@ int try_remount(struct autofs_point *ap, struct mapent *me, unsigned int type)
+ 	/*
+ 	 * The directory must exist since we found a device
+ 	 * number for the mount but we can't know if we created
+-	 * it or not. However, if we're mounted on an autofs fs
+-	 * then we need to cleanup the path anyway.
++	 * it or not. However, if this is an indirect mount with
++	 * the nobrowse option we need to remove the mount point
++	 * directory at umount anyway.
+ 	 */
+ 	if (type == t_indirect) {
+-		ap->flags &= ~MOUNT_FLAG_DIR_CREATED;
+-		if (ret == DEV_IOCTL_IS_AUTOFS)
++		if (ap->flags & MOUNT_FLAG_GHOST)
++			ap->flags &= ~MOUNT_FLAG_DIR_CREATED;
++		else
+ 			ap->flags |= MOUNT_FLAG_DIR_CREATED;
+-	} else {
++	} else
+ 		me->flags &= ~MOUNT_FLAG_DIR_CREATED;
+-		if (ret == DEV_IOCTL_IS_AUTOFS)
+-			me->flags |= MOUNT_FLAG_DIR_CREATED;
+-	}
+ 
+ 	/*
+ 	 * Either we opened the mount or we're re-reading the map.

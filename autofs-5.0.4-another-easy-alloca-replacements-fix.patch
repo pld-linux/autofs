@@ -1,0 +1,36 @@
+autofs-5.0.4 - another easy alloca replacements fix
+
+From: Ian Kent <raven@themaw.net>
+
+Fix array out of bounds access in modules/lookup_ldap.c:get_query_dn().
+---
+
+ CHANGELOG             |    1 +
+ modules/lookup_ldap.c |    1 -
+ 2 files changed, 1 insertions(+), 1 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 8860b2c..4df6a60 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -29,6 +29,7 @@
+ - fix bad token declaration in master map parser.
+ - fix return start status on fail.
+ - fix double free in expire_proc().
++- another easy alloca replacements fix.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index 547ca01..5a54b5f 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -323,7 +323,6 @@ static int get_query_dn(unsigned logopt, LDAP *ldap, struct lookup_context *ctxt
+ 		}
+ 		scope = LDAP_SCOPE_SUBTREE;
+ 	}
+-	query[l] = '\0';
+ 
+ 	if (!ctxt->base) {
+ 		sdns = defaults_get_searchdns();

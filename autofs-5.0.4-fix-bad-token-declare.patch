@@ -1,0 +1,39 @@
+autofs-5.0.4 - fix bad token declaration
+
+From: Ian Kent <raven@themaw.net>
+
+Fix an incorrect %token declaration in the master map parser.
+In some rare cases this can cause the timeout sent from the tokenizer
+to the parser to always be zero.
+---
+
+ CHANGELOG          |    1 +
+ lib/master_parse.y |    2 +-
+ 2 files changed, 2 insertions(+), 1 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 0ce2a56..fdde400 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -26,6 +26,7 @@
+ - cleanup configure defines for libtirpc.
+ - add WITH_LIBTIRPC to -V status report.
+ - add nfs mount protocol default configuration option.
++- fix bad token declaration in master map parser.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/lib/master_parse.y b/lib/master_parse.y
+index 3e598d9..454a2ed 100644
+--- a/lib/master_parse.y
++++ b/lib/master_parse.y
+@@ -122,7 +122,7 @@ static int master_fprintf(FILE *, char *, ...);
+ %token <strtype> MAPNULL
+ %token <strtype> MAPXFN
+ %token <strtype> MAPNAME
+-%token <inttype> NUMBER
++%token <longtype> NUMBER
+ %token <strtype> OPTION
+ 
+ %start file

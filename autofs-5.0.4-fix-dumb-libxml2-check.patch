@@ -1,0 +1,87 @@
+autofs-5.0.4 - fix dumb libxml2 check
+
+From: Ian Kent <raven@themaw.net>
+
+The workaround for libxml2 not deleting its thread specific data
+key at library unload has become broken. It was foolish of me to
+think that the libxml2 folks would fix this in any reasonable time.
+This patch changes the version check to 99 for the major and minor
+revisions, the same as the check for the revision to ensure that
+the workaround is always used and adds the setting to the build
+information produced by the -V option.
+---
+
+ CHANGELOG          |    4 ++++
+ aclocal.m4         |    4 ++--
+ configure          |    4 ++--
+ daemon/automount.c |   10 ++++++++++
+ 4 files changed, 18 insertions(+), 4 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index a618d7e..4e8209e 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -1,3 +1,7 @@
++??/??/2009 autofs-5.0.5
++-----------------------
++- fix dumb libxml2 check
++
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+ - correct configure test for ldapr page control functions.
+diff --git a/aclocal.m4 b/aclocal.m4
+index 52a1e47..bb0ab21 100644
+--- a/aclocal.m4
++++ b/aclocal.m4
+@@ -201,10 +201,10 @@ else
+   XML_FLAGS=`$XML_CONFIG --cflags`
+   XML_VER=`$XML_CONFIG --version`
+   XML_MAJOR=`echo $XML_VER|cut -d\. -f1`
+-  if test $XML_MAJOR -le 2
++  if test $XML_MAJOR -le 99
+   then
+     XML_MINOR=`echo $XML_VER|cut -d\. -f2`
+-    if test $XML_MINOR -le 6
++    if test $XML_MINOR -le 99
+     then
+       XML_REV=`echo $XML_VER|cut -d\. -f3`
+       if test $XML_REV -le 99; then
+diff --git a/configure b/configure
+index b8cc62f..ed17660 100755
+--- a/configure
++++ b/configure
+@@ -2564,10 +2564,10 @@ echo "${ECHO_T}yes" >&6; }
+   XML_FLAGS=`$XML_CONFIG --cflags`
+   XML_VER=`$XML_CONFIG --version`
+   XML_MAJOR=`echo $XML_VER|cut -d\. -f1`
+-  if test $XML_MAJOR -le 2
++  if test $XML_MAJOR -le 99
+   then
+     XML_MINOR=`echo $XML_VER|cut -d\. -f2`
+-    if test $XML_MINOR -le 6
++    if test $XML_MINOR -le 99
+     then
+       XML_REV=`echo $XML_VER|cut -d\. -f3`
+       if test $XML_REV -le 99; then
+diff --git a/daemon/automount.c b/daemon/automount.c
+index 863aac5..6f078c1 100644
+--- a/daemon/automount.c
++++ b/daemon/automount.c
+@@ -1743,6 +1743,16 @@ static void show_build_info(void)
+ #ifdef WITH_DMALLOC
+ 	printf("WITH_DMALLOC ");
+ 	count = count + 13;
++
++	if (count > 60) {
++		printf("\n  ");
++		count = 0;
++	}
++#endif
++
++#ifdef LIBXML2_WORKAROUND
++	printf("LIBXML2_WORKAROUND ");
++	count = count + 19;
+ #endif
+ 
+ 	printf("\n\n");

@@ -1,0 +1,552 @@
+autofs-5.0.4 - code analysis corrections
+
+From: Ian Kent <raven@themaw.net>
+
+Several mistakes have been reported by Paul Wankadia <junyer@google.com>:
+- a malloc(3) allocation return was not being checked in make_fullpath().
+- a double free and a use after free was identified in lookup_prune_cache().
+- off-by-one buffer overflow in lib/macros.c:macro_parse_globalvar().
+- several potential buffer overflows in modules/parse_hesiod.c.
+- double free in daemon/indirect.c:do_mount_autofs_indirect().
+- bogus struct name used for sizeof in lib/cache.c:cache_init() and
+  lib/cache.c:cache_init_null_cache().
+- in daemon/direct.c:handle_packet_expire_direct master_unlock_mutex() not
+  needed and mutexes not unlocked for file descriptor fail case.
+- in modules/lookup_multi.c:lookup_init() struct module_info array not
+  checked before free for allocation failure case.
+- in modules/lookup_program.c:lookup_mount() mapent not freed on cache update failure.
+- in modules/mount_nfs.c allocation of mount location not checked.
+- in modules/parse_sun.c:parse_mapent() mount location not freed on syntax error.
+- in modules/parse_sun.c:parse_mount() mount location not freed on syntax error.
+- in modules/parse_sun.c:parse_init() a malloc is not checked and the
+  handling of the fail case is poor.
+- in lib/mounts.c:tree_make_mnt_tree() variable ent is not freed on ent->path
+  alloc fail.
+- in modules/replicated.c:add_host() NULL pointer dereference.
+- add missing pthread_attr_destroy() in lib/alarm.c:alarm_start_handler().
+- add missing pthread_attr_destroy() in daemon/state.c:st_start_handler().
+- add missing fclose() in lib/defaults.c:*defaults_get_searchdns().
+- add missing close()es in modules/mount_changer.c:swapCD().
+---
+
+ daemon/direct.c          |    6 ++-
+ daemon/indirect.c        |    3 +-
+ daemon/lookup.c          |   20 +++++-------
+ daemon/state.c           |    6 ++-
+ lib/alarm.c              |    6 ++-
+ lib/cache.c              |    4 +-
+ lib/defaults.c           |    1 +
+ lib/macros.c             |    2 +
+ lib/mounts.c             |    5 ++-
+ modules/lookup_multi.c   |   15 +++++----
+ modules/lookup_program.c |    4 ++
+ modules/mount_changer.c  |    2 +
+ modules/mount_nfs.c      |    5 +++
+ modules/parse_hesiod.c   |   79 ++++++++++++++++++++++++++++++++++++++++------
+ modules/parse_sun.c      |   18 ++++++----
+ modules/replicated.c     |    2 +
+ 16 files changed, 123 insertions(+), 55 deletions(-)
+
+
+diff --git a/daemon/direct.c b/daemon/direct.c
+index 2d979f1..fc3c969 100644
+--- a/daemon/direct.c
++++ b/daemon/direct.c
+@@ -1088,7 +1088,6 @@ int handle_packet_expire_direct(struct autofs_point *ap, autofs_packet_expire_di
+ 		crit(ap->logopt, "can't find map entry for (%lu,%lu)",
+ 		    (unsigned long) pkt->dev, (unsigned long) pkt->ino);
+ 		master_source_unlock(ap->entry);
+-		master_mutex_unlock();
+ 		pthread_setcancelstate(state, NULL);
+ 		return 1;
+ 	}
+@@ -1098,8 +1097,9 @@ int handle_packet_expire_direct(struct autofs_point *ap, autofs_packet_expire_di
+ 		int ioctlfd;
+ 		ops->open(ap->logopt, &ioctlfd, me->dev, me->key);
+ 		if (ioctlfd == -1) {
+-			crit(ap->logopt, "can't open ioctlfd for %s",
+-			     me->key);
++			crit(ap->logopt, "can't open ioctlfd for %s", me->key);
++			cache_unlock(mc);
++			master_source_unlock(ap->entry);
+ 			pthread_setcancelstate(state, NULL);
+ 			return 1;
+ 		}
+diff --git a/daemon/indirect.c b/daemon/indirect.c
+index 2ccbc53..f40c393 100644
+--- a/daemon/indirect.c
++++ b/daemon/indirect.c
+@@ -159,6 +159,7 @@ static int do_mount_autofs_indirect(struct autofs_point *ap, const char *root)
+ 	}
+ 
+ 	free(options);
++	options = NULL;
+ 
+ 	ret = stat(root, &st);
+ 	if (ret == -1) {
+@@ -167,8 +168,6 @@ static int do_mount_autofs_indirect(struct autofs_point *ap, const char *root)
+ 		goto out_umount;
+ 	}
+ 
+-	options = NULL;
+-
+ 	if (ops->open(ap->logopt, &ap->ioctlfd, st.st_dev, root)) {
+ 		crit(ap->logopt,
+ 		     "failed to create ioctl fd for autofs path %s", ap->path);
+diff --git a/daemon/lookup.c b/daemon/lookup.c
+index e034348..fd2ce55 100644
+--- a/daemon/lookup.c
++++ b/daemon/lookup.c
+@@ -1001,12 +1001,16 @@ static char *make_fullpath(const char *root, const char *key)
+ 		if (l > KEY_MAX_LEN)
+ 			return NULL;
+ 		path = malloc(l);
++		if (!path)
++			return NULL;
+ 		strcpy(path, key);
+ 	} else {
+ 		l = strlen(key) + 1 + strlen(root) + 1;
+ 		if (l > KEY_MAX_LEN)
+ 			return NULL;
+ 		path = malloc(l);
++		if (!path)
++			return NULL;
+ 		sprintf(path, "%s/%s", root, key);
+ 	}
+ 	return path;
+@@ -1076,10 +1080,6 @@ int lookup_prune_cache(struct autofs_point *ap, time_t age)
+ 			this = cache_lookup_distinct(mc, key);
+ 			if (!this) {
+ 				cache_unlock(mc);
+-				free(key);
+-				if (next_key)
+-					free(next_key);
+-				free(path);
+ 				goto next;
+ 			}
+ 
+@@ -1097,18 +1097,14 @@ int lookup_prune_cache(struct autofs_point *ap, time_t age)
+ 			}
+ 			cache_unlock(mc);
+ 
+-			if (!next_key) {
+-				free(key);
+-				free(path);
+-				cache_readlock(mc);
+-				continue;
+-			}
+ next:
+ 			cache_readlock(mc);
+-			me = cache_lookup_distinct(mc, next_key);
++			if (next_key) {
++				me = cache_lookup_distinct(mc, next_key);
++				free(next_key);
++			}
+ 			free(key);
+ 			free(path);
+-			free(next_key);
+ 		}
+ 		pthread_cleanup_pop(1);
+ 		map->stale = 0;
+diff --git a/daemon/state.c b/daemon/state.c
+index cd63be1..606743b 100644
+--- a/daemon/state.c
++++ b/daemon/state.c
+@@ -1140,9 +1140,9 @@ int st_start_handler(void)
+ 	}
+ 
+ 	status = pthread_create(&thid, pattrs, st_queue_handler, NULL);
+-	if (status)
+-		return 0;
+ 
+-	return 1;
++	pthread_attr_destroy(pattrs);
++
++	return !status;
+ }
+ 
+diff --git a/lib/alarm.c b/lib/alarm.c
+index 1e32291..46df38a 100755
+--- a/lib/alarm.c
++++ b/lib/alarm.c
+@@ -238,9 +238,9 @@ int alarm_start_handler(void)
+ 	}
+ 
+ 	status = pthread_create(&thid, pattrs, alarm_handler, NULL);
+-	if (status)
+-	 	return 0;
+ 
+-	return 1;
++	pthread_attr_destroy(pattrs);
++
++	return !status;
+ }
+ 
+diff --git a/lib/cache.c b/lib/cache.c
+index edb3192..4cb4582 100644
+--- a/lib/cache.c
++++ b/lib/cache.c
+@@ -192,7 +192,7 @@ struct mapent_cache *cache_init(struct autofs_point *ap, struct map_source *map)
+ 
+ 	mc->size = defaults_get_map_hash_table_size();
+ 
+-	mc->hash = malloc(mc->size * sizeof(struct entry *));
++	mc->hash = malloc(mc->size * sizeof(struct mapent *));
+ 	if (!mc->hash) {
+ 		free(mc);
+ 		return NULL;
+@@ -243,7 +243,7 @@ struct mapent_cache *cache_init_null_cache(struct master *master)
+ 
+ 	mc->size = NULL_MAP_HASHSIZE;
+ 
+-	mc->hash = malloc(mc->size * sizeof(struct entry *));
++	mc->hash = malloc(mc->size * sizeof(struct mapent *));
+ 	if (!mc->hash) {
+ 		free(mc);
+ 		return NULL;
+diff --git a/lib/defaults.c b/lib/defaults.c
+index 0d39716..e507a59 100644
+--- a/lib/defaults.c
++++ b/lib/defaults.c
+@@ -565,6 +565,7 @@ struct ldap_searchdn *defaults_get_searchdns(void)
+ 
+ 			if (!new) {
+ 				defaults_free_searchdns(sdn);
++				fclose(f);
+ 				return NULL;
+ 			}
+ 
+diff --git a/lib/macros.c b/lib/macros.c
+index 85f9cd3..32b70bf 100644
+--- a/lib/macros.c
++++ b/lib/macros.c
+@@ -165,7 +165,7 @@ int macro_parse_globalvar(const char *define)
+ 	char buf[MAX_MACRO_STRING];
+ 	char *pbuf, *value;
+ 
+-	if (strlen(define) > MAX_MACRO_STRING)
++	if (strlen(define) >= MAX_MACRO_STRING)
+ 		return 0;
+ 
+ 	strcpy(buf, define);
+diff --git a/lib/mounts.c b/lib/mounts.c
+index b98e1a4..08ca4e3 100644
+--- a/lib/mounts.c
++++ b/lib/mounts.c
+@@ -257,10 +257,10 @@ struct mnt_list *get_mnt_list(const char *table, const char *path, int include)
+ 
+ 		if (mptr == list)
+ 			list = ent;
++		else
++			last->next = ent;
+ 
+ 		ent->next = mptr;
+-		if (last)
+-			last->next = ent;
+ 
+ 		ent->path = malloc(len + 1);
+ 		if (!ent->path) {
+@@ -705,6 +705,7 @@ struct mnt_list *tree_make_mnt_tree(const char *table, const char *path)
+ 		ent->path = malloc(len + 1);
+ 		if (!ent->path) {
+ 			endmntent(tab);
++			free(ent);
+ 			tree_free_mnt_tree(tree);
+ 			return NULL;
+ 		}
+diff --git a/modules/lookup_multi.c b/modules/lookup_multi.c
+index 1bf2e0a..6ec8434 100644
+--- a/modules/lookup_multi.c
++++ b/modules/lookup_multi.c
+@@ -212,14 +212,15 @@ nomem:
+ 	logerr(MODPREFIX "error: %s", estr);
+ error_out:
+ 	if (ctxt) {
+-		for (i = 0; i < ctxt->n; i++) {
+-			if (ctxt->m[i].mod)
+-				close_lookup(ctxt->m[i].mod);
+-			if (ctxt->m[i].argv)
+-				free_argv(ctxt->m[i].argc, ctxt->m[i].argv);
+-		}
+-		if (ctxt->m)
++		if (ctxt->m) {
++			for (i = 0; i < ctxt->n; i++) {
++				if (ctxt->m[i].mod)
++					close_lookup(ctxt->m[i].mod);
++				if (ctxt->m[i].argv)
++					free_argv(ctxt->m[i].argc, ctxt->m[i].argv);
++			}
+ 			free(ctxt->m);
++		}
+ 		if (ctxt->argl)
+ 			free(ctxt->argl);
+ 		free(ctxt);
+diff --git a/modules/lookup_program.c b/modules/lookup_program.c
+index 9878936..5b295a5 100644
+--- a/modules/lookup_program.c
++++ b/modules/lookup_program.c
+@@ -396,8 +396,10 @@ next:
+ 	cache_writelock(mc);
+ 	ret = cache_update(mc, source, name, mapent, time(NULL));
+ 	cache_unlock(mc);
+-	if (ret == CHE_FAIL)
++	if (ret == CHE_FAIL) {
++		free(mapent);
+ 		return NSS_STATUS_UNAVAIL;
++	}
+ 
+ 	debug(ap->logopt, MODPREFIX "%s -> %s", name, mapent);
+ 
+diff --git a/modules/mount_changer.c b/modules/mount_changer.c
+index 92bb72b..c30190d 100644
+--- a/modules/mount_changer.c
++++ b/modules/mount_changer.c
+@@ -162,6 +162,7 @@ int swapCD(const char *device, const char *slotName)
+ 		logerr(MODPREFIX
+ 		      "Device %s is not an ATAPI compliant CD changer.",
+ 		      device);
++		close(fd);
+ 		return 1;
+ 	}
+ 
+@@ -169,6 +170,7 @@ int swapCD(const char *device, const char *slotName)
+ 	slot = ioctl(fd, CDROM_SELECT_DISC, slot);
+ 	if (slot < 0) {
+ 		logerr(MODPREFIX "CDROM_SELECT_DISC failed");
++		close(fd);
+ 		return 1;
+ 	}
+ 
+diff --git a/modules/mount_nfs.c b/modules/mount_nfs.c
+index 20732f8..6f54f47 100644
+--- a/modules/mount_nfs.c
++++ b/modules/mount_nfs.c
+@@ -221,6 +221,11 @@ int mount_mount(struct autofs_point *ap, const char *root, const char *name, int
+ 		/* Not a local host - do an NFS mount */
+ 
+ 		loc = malloc(strlen(this->name) + 1 + strlen(this->path) + 1);
++		if (!loc) {
++			char *estr = strerror_r(errno, buf, MAX_ERR_BUF);
++			error(ap->logopt, "malloc: %s", estr);
++			return 1;
++		}
+ 		strcpy(loc, this->name);
+ 		strcat(loc, ":");
+ 		strcat(loc, this->path);
+diff --git a/modules/parse_hesiod.c b/modules/parse_hesiod.c
+index d5bb0f4..7a6a57d 100644
+--- a/modules/parse_hesiod.c
++++ b/modules/parse_hesiod.c
+@@ -46,6 +46,12 @@ static int parse_afs(struct autofs_point *ap,
+ 
+ 	/* Isolate the source for this AFS fs. */
+ 	for (i = 0; (!isspace(p[i]) && i < source_len); i++) {
++		if (!p[i]) {
++			error(ap->logopt, MODPREFIX
++			      "unexpeced end of input looking for AFS "
++			      "source: %s", p);
++			return 1;
++		}
+ 		source[i] = p[i];
+ 	}
+ 
+@@ -56,8 +62,14 @@ static int parse_afs(struct autofs_point *ap,
+ 	while ((*p) && (isspace(*p)))
+ 		p++;
+ 
+-	/* Isolate the source for this AFS fs. */
++	/* Isolate the options for this AFS fs. */
+ 	for (i = 0; (!isspace(p[i]) && i < options_len); i++) {
++		if (!p[i]) {
++			error(ap->logopt, MODPREFIX
++			      "unexpeced end of input looking for AFS "
++			      "options: %s", p);
++			return 1;
++		}
+ 		options[i] = p[i];
+ 	}
+ 	options[i] = 0;
+@@ -106,6 +118,12 @@ static int parse_nfs(struct autofs_point *ap,
+ 
+ 	/* Isolate the remote mountpoint for this NFS fs. */
+ 	for (i = 0; (!isspace(p[i]) && i < (int) sizeof(mount)); i++) {
++		if (!p[i]) {
++			error(ap->logopt, MODPREFIX
++			      "unexpeced end of input looking for NFS "
++			      "mountpoint: %s", p);
++			return 1;
++		}
+ 		mount[i] = p[i];
+ 	}
+ 
+@@ -118,15 +136,26 @@ static int parse_nfs(struct autofs_point *ap,
+ 
+ 	/* Isolate the remote host. */
+ 	for (i = 0; (!isspace(p[i]) && i < source_len); i++) {
++		if (!p[i]) {
++			error(ap->logopt, MODPREFIX
++			      "unexpeced end of input looking for NFS "
++			      "host: %s", p);
++			return 1;
++		}
+ 		source[i] = p[i];
+ 	}
+ 
+ 	source[i] = 0;
+ 	p += i;
+ 
++	if (strlen(source) + strlen(mount) + 2 > source_len) {
++		error(ap->logopt, MODPREFIX "entry too log for mount source");
++		return 1;
++	}
++
+ 	/* Append ":mountpoint" to the source to get "host:mountpoint". */
+-	strncat(source, ":", source_len);
+-	strncat(source, mount, source_len);
++	strcat(source, ":");
++	strcat(source, mount);
+ 
+ 	/* Skip whitespace. */
+ 	while ((*p) && (isspace(*p)))
+@@ -134,6 +163,12 @@ static int parse_nfs(struct autofs_point *ap,
+ 
+ 	/* Isolate the mount options. */
+ 	for (i = 0; (!isspace(p[i]) && i < options_len); i++) {
++		if (!p[i]) {
++			error(ap->logopt, MODPREFIX
++			      "unexpeced end of input looking for NFS "
++			      "mount options: %s", p);
++			return 1;
++		}
+ 		options[i] = p[i];
+ 	}
+ 	options[i] = 0;
+@@ -178,6 +213,12 @@ static int parse_generic(struct autofs_point *ap,
+ 
+ 	/* Isolate the source for this fs. */
+ 	for (i = 0; (!isspace(p[i]) && i < source_len); i++) {
++		if (!p[i]) {
++			error(ap->logopt, MODPREFIX
++			      "unexpeced end of input looking for generic "
++			      "mount source: %s", p);
++			return 1;
++		}
+ 		source[i] = p[i];
+ 	}
+ 
+@@ -190,6 +231,12 @@ static int parse_generic(struct autofs_point *ap,
+ 
+ 	/* Isolate the mount options. */
+ 	for (i = 0; (!isspace(p[i]) && i < options_len); i++) {
++		if (!p[i]) {
++			error(ap->logopt, MODPREFIX
++			      "unexpeced end of input looking for generic "
++			      "mount options: %s", p);
++			return 1;
++		}
+ 		options[i] = p[i];
+ 	}
+ 	options[i] = 0;
+@@ -227,6 +274,7 @@ int parse_mount(struct autofs_point *ap, const char *name,
+ 	char options[HESIOD_LEN + 1];
+ 	char *q;
+ 	const char *p;
++	int ret;
+ 
+ 	ap->entry->current = NULL;
+ 	master_source_current_signal(ap->entry);
+@@ -250,19 +298,28 @@ int parse_mount(struct autofs_point *ap, const char *name,
+ 		return 1;
+ 	/* If it's an AFS fs... */
+ 	} else if (!strcasecmp(fstype, "afs"))
+-		parse_afs(ap, mapent, name, name_len,
+-			  source, sizeof(source), options, sizeof(options));
++		ret = parse_afs(ap, mapent, name, name_len,
++				source, sizeof(source), options,
++				sizeof(options));
+ 	/* If it's NFS... */
+ 	else if (!strcasecmp(fstype, "nfs"))
+-		parse_nfs(ap, mapent, name, name_len,
+-			  source, sizeof(source), options, sizeof(options));
++		ret = parse_nfs(ap, mapent, name, name_len,
++				source, sizeof(source), options,
++				sizeof(options));
+ 	/* Punt. */
+ 	else
+-		parse_generic(ap, mapent, name, name_len, source, sizeof(source),
+-			      options, sizeof(options));
++		ret = parse_generic(ap, mapent, name, name_len,
++				    source, sizeof(source), options,
++				    sizeof(options));
+ 
+-	debug(ap->logopt,
+-	      MODPREFIX "mount %s is type %s from %s", name, fstype, source);
++	if (ret) {
++		error(ap->logopt, MODPREFIX "failed to parse entry");
++		return 1;
++	} else {
++		debug(ap->logopt,
++		      MODPREFIX "mount %s is type %s from %s",
++		      name, fstype, source);
++	}
+ 
+ 	return do_mount(ap, ap->path, name, name_len, source, fstype, options);
+ }
+diff --git a/modules/parse_sun.c b/modules/parse_sun.c
+index 72e51e2..ed73e46 100644
+--- a/modules/parse_sun.c
++++ b/modules/parse_sun.c
+@@ -379,15 +379,17 @@ int parse_init(int argc, const char *const *argv, void **context)
+ 			if (ctxt->optstr) {
+ 				noptstr =
+ 				    (char *) realloc(ctxt->optstr, optlen + len + 2);
+-				if (!noptstr)
+-					break;
+-				noptstr[optlen] = ',';
+-				strcpy(noptstr + optlen + 1, argv[i] + offset);
+-				optlen += len + 1;
++				if (noptstr) {
++					noptstr[optlen] = ',';
++					strcpy(noptstr + optlen + 1, argv[i] + offset);
++					optlen += len + 1;
++				}
+ 			} else {
+ 				noptstr = (char *) malloc(len + 1);
+-				strcpy(noptstr, argv[i] + offset);
+-				optlen = len;
++				if (noptstr) {
++					strcpy(noptstr, argv[i] + offset);
++					optlen = len;
++				}
+ 			}
+ 			if (!noptstr) {
+ 				char *estr = strerror_r(errno, buf, MAX_ERR_BUF);
+@@ -895,6 +897,7 @@ static int parse_mapent(const char *ent, char *g_options, char **options, char *
+ 	if (*p == '/') {
+ 		warn(logopt, MODPREFIX "error location begins with \"/\"");
+ 		free(myoptions);
++		free(loc);
+ 		return 0;
+ 	}
+ 
+@@ -1636,6 +1639,7 @@ int parse_mount(struct autofs_point *ap, const char *name,
+ 		/* Location can't begin with a '/' */
+ 		if (*p == '/') {
+ 			free(options);
++			free(loc);
+ 			warn(ap->logopt,
+ 			      MODPREFIX "error location begins with \"/\"");
+ 			return 1;
+diff --git a/modules/replicated.c b/modules/replicated.c
+index 63829a2..835af97 100644
+--- a/modules/replicated.c
++++ b/modules/replicated.c
+@@ -304,7 +304,7 @@ static int add_host(struct host **list, struct host *host)
+ {
+ 	struct host *this, *last;
+ 
+-	if (!list) {
++	if (!*list) {
+ 		*list = host;
+ 		return 1;
+ 	}

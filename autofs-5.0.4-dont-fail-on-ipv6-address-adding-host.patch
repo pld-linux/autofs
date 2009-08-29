@@ -1,0 +1,68 @@
+autofs-5.0.4 - dont fail on ipv6 address adding host
+
+From: Ian Kent <raven@themaw.net>
+
+We don't have IPv6 support enabled in libtirpc yet. When we
+perform name (or address) lookup and we get a mixture of IPv4
+and IPv6 addresses the lack of IPv6 support can cause the
+parse_location() function to fail to add any valid hosts when
+in fact it should.
+---
+
+ CHANGELOG            |    1 +
+ include/replicated.h |    1 +
+ modules/replicated.c |    9 ++++++++-
+ 3 files changed, 10 insertions(+), 1 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 89aaa99..7e1012f 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -46,6 +46,7 @@
+ - dont umount existing direct mount on master re-read.
+ - fix incorrect shutdown introduced by library relaod fixes.
+ - improve manual umount recovery.
++- dont fail on ipv6 address when adding host.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/include/replicated.h b/include/replicated.h
+index e0133ff..fd87c08 100644
+--- a/include/replicated.h
++++ b/include/replicated.h
+@@ -21,6 +21,7 @@
+ #define PROXIMITY_SUBNET        0x0002
+ #define PROXIMITY_NET           0x0004
+ #define PROXIMITY_OTHER         0x0008
++#define PROXIMITY_UNSUPPORTED   0x0010
+ 
+ #define NFS2_SUPPORTED		0x0010
+ #define NFS3_SUPPORTED		0x0020
+diff --git a/modules/replicated.c b/modules/replicated.c
+index 79845d0..a66de9f 100644
+--- a/modules/replicated.c
++++ b/modules/replicated.c
+@@ -181,7 +181,7 @@ static unsigned int get_proximity(struct sockaddr *host_addr)
+ 
+ 	case AF_INET6:
+ #ifndef INET6
+-		return PROXIMITY_ERROR;
++		return PROXIMITY_UNSUPPORTED;
+ #else
+ 		addr6 = (struct sockaddr_in6 *) host_addr;
+ 		hst6_addr = (struct in6_addr *) &addr6->sin6_addr;
+@@ -1048,6 +1048,13 @@ static int add_new_host(struct host **list,
+ 	int addr_len;
+ 
+ 	prx = get_proximity(host_addr->ai_addr);
++	/*
++	 * If we tried to add an IPv6 address and we don't have IPv6
++	 * support return success in the hope of getting an IPv4
++	 * address later.
++	 */
++	if (prx == PROXIMITY_UNSUPPORTED)
++		return 1;
+ 	if (prx == PROXIMITY_ERROR)
+ 		return 0;
+ 

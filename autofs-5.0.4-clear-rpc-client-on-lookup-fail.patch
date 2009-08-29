@@ -1,0 +1,47 @@
+autofs-5.0.4 - clear rpc client on lookup fail
+
+From: Ian Kent <raven@themaw.net>
+
+If a name lookup failure occurs in create_tcp_client() or create_udp_client()
+the client is destoryed and the file descriptor is closed at exit but the rpc
+client isn't set to NULL. This leads to a subsequent SEGV when attempting to
+use the invalid client.
+---
+
+ CHANGELOG      |    1 +
+ lib/rpc_subs.c |    2 ++
+ 2 files changed, 3 insertions(+), 0 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 00b455e..91edd14 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -34,6 +34,7 @@
+ - fix file map lookup when reading included or nsswitch sources.
+ - use misc device ioctl interface by default, if available.
+ - fix call restorecon when misc device file doesn't exist.
++- clear rpc client on lookup fail.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/lib/rpc_subs.c b/lib/rpc_subs.c
+index a822f1f..d034b29 100644
+--- a/lib/rpc_subs.c
++++ b/lib/rpc_subs.c
+@@ -346,6 +346,7 @@ static CLIENT *create_udp_client(struct conn_info *info)
+ 	if (ret) {
+ 		error(LOGOPT_ANY,
+ 		      "hostname lookup failed: %s", gai_strerror(ret));
++		info->client = NULL;
+ 		goto out_close;
+ 	}
+ 
+@@ -470,6 +471,7 @@ static CLIENT *create_tcp_client(struct conn_info *info)
+ 	if (ret) {
+ 		error(LOGOPT_ANY,
+ 		      "hostname lookup failed: %s", gai_strerror(ret));
++		info->client = NULL;
+ 		goto out_close;
+ 	}
+ 

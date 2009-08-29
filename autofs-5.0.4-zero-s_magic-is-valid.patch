@@ -1,0 +1,47 @@
+autofs-5.0.4 - zero s_magic is valid
+
+From: Ian Kent <raven@themaw.net>
+
+When checking the super magic using the mount control ioctl
+re-implementation an incorrect assumption is made that s_magic
+field in the super block will not be zero.
+---
+
+ CHANGELOG           |    1 +
+ lib/dev-ioctl-lib.c |   10 ++++------
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 5f1cf7f..4ed80e0 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -39,6 +39,7 @@
+ - fix memory leak reading master map.
+ - fix st_remove_tasks() locking.
+ - reset flex scanner when setting buffer.
++- zero s_magic is valid.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/lib/dev-ioctl-lib.c b/lib/dev-ioctl-lib.c
+index 7c8c433..a034a3d 100644
+--- a/lib/dev-ioctl-lib.c
++++ b/lib/dev-ioctl-lib.c
+@@ -764,12 +764,10 @@ static int dev_ioctl_ismountpoint(unsigned int logopt,
+ 	if (err) {
+ 		*mountpoint = DEV_IOCTL_IS_MOUNTED;
+ 
+-		if (param->ismountpoint.out.magic) {
+-			if (param->ismountpoint.out.magic == AUTOFS_SUPER_MAGIC)
+-				*mountpoint |= DEV_IOCTL_IS_AUTOFS;
+-			else
+-				*mountpoint |= DEV_IOCTL_IS_OTHER;
+-		}
++		if (param->ismountpoint.out.magic == AUTOFS_SUPER_MAGIC)
++			*mountpoint |= DEV_IOCTL_IS_AUTOFS;
++		else
++			*mountpoint |= DEV_IOCTL_IS_OTHER;
+ 	}
+ 
+ 	free_dev_ioctl_path(param);

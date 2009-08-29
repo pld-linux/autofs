@@ -1,0 +1,51 @@
+autofs-5.0.4 - fix restorecon
+
+From: Ian Kent <raven@themaw.net>
+
+If the misc device node doesn't exist don't try to run restorecon on it.
+---
+
+ CHANGELOG             |    1 +
+ redhat/autofs.init.in |    2 +-
+ samples/rc.autofs.in  |    2 +-
+ 3 files changed, 3 insertions(+), 2 deletions(-)
+
+
+diff --git a/CHANGELOG b/CHANGELOG
+index 96a4617..00b455e 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -33,6 +33,7 @@
+ - add LSB init script parameter block.
+ - fix file map lookup when reading included or nsswitch sources.
+ - use misc device ioctl interface by default, if available.
++- fix call restorecon when misc device file doesn't exist.
+ 
+ 4/11/2008 autofs-5.0.4
+ -----------------------
+diff --git a/redhat/autofs.init.in b/redhat/autofs.init.in
+index 0fd1777..a9a33c8 100644
+--- a/redhat/autofs.init.in
++++ b/redhat/autofs.init.in
+@@ -76,7 +76,7 @@ function start() {
+ 				mknod -m 0600 /dev/$DEVICE c 10 $MINOR
+ 			fi
+ 		fi
+-		if [ -x /sbin/restorecon ]; then
++		if [ -x /sbin/restorecon -a -c /dev/$DEVICE ]; then
+ 			/sbin/restorecon /dev/$DEVICE
+ 		fi
+ 	else
+diff --git a/samples/rc.autofs.in b/samples/rc.autofs.in
+index 63a0c5d..78cbec2 100644
+--- a/samples/rc.autofs.in
++++ b/samples/rc.autofs.in
+@@ -66,7 +66,7 @@ function start() {
+ 				mknod -m 0600 /dev/$DEVICE c 10 $MINOR
+ 			fi
+ 		fi
+-		if [ -x /sbin/restorecon ]; then
++		if [ -x /sbin/restorecon -a -c /dev/$DEVICE ]; then
+ 			/sbin/restorecon /dev/$DEVICE
+ 		fi
+ 	else
