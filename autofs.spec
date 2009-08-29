@@ -1,6 +1,9 @@
 # TODO:
 # - change /net to something FHS-compliant ?
 #
+# Conditional build:
+%bcond_without	ldap	# without LDAP extension module
+#
 Summary:	autofs daemon
 Summary(de.UTF-8):	autofs daemon
 Summary(es.UTF-8):	Servidor autofs
@@ -95,7 +98,7 @@ BuildRequires:	heimdal-devel
 BuildRequires:	hesiod-devel
 BuildRequires:	libxml2-devel
 BuildRequires:	mount
-BuildRequires:	openldap-devel >= 2.4.6
+%{?with_ldap:BuildRequires:	openldap-devel >= 2.4.6}
 BuildRequires:	rpmbuild(macros) >= 1.268
 Requires(post,preun):	/sbin/chkconfig
 Requires:	mktemp
@@ -230,6 +233,7 @@ trzymanych na serwerze LDAP.
 
 export initdir=/etc/rc.d/init.d
 %configure \
+	--with-openldap=%{?with_ldap:yes}%{!?with_ldap:no} \
 	--enable-force-shutdown=yes \
 	--with-confdir=%{_sysconfdir} \
 	--with-mapdir=%{_sysconfdir}
@@ -316,8 +320,10 @@ fi
 %attr(755,root,root) %{_libdir}/autofs/parse_sun.so
 %{_mandir}/man[58]/*
 
+%if %{with ldap}
 %files ldap
 %defattr(644,root,root,755)
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs_ldap_auth.conf
 %attr(755,root,root) %{_libdir}/autofs/lookup_ldap.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_ldaps.so
+%endif
