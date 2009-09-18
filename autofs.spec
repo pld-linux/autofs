@@ -2,7 +2,7 @@
 # - change /net to something FHS-compliant ?
 #
 # Conditional build:
-%bcond_without	ldap	# without LDAP extension module
+%bcond_with	ldap	# build LDAP extension module (need port to heimdal)
 #
 Summary:	autofs daemon
 Summary(de.UTF-8):	autofs daemon
@@ -13,7 +13,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.0.4
-Release:	0.1
+Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
