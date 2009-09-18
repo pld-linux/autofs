@@ -13,7 +13,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.0.5
-Release:	0.1
+Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -25,6 +25,7 @@ Source3:	%{name}-auto.media
 Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
+Patch1:		%{name}-makefile.patch
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
@@ -101,6 +102,7 @@ trzymanych na serwerze LDAP.
 %prep
 %setup -q
 %patch0 -p1
+%patch1 -p1
 
 %build
 %{__autoconf}
