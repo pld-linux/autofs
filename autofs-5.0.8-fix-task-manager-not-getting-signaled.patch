@@ -1,0 +1,47 @@
+autofs-5.0.8 - fix task manager not getting signaled
+
+From: Ian Kent <ikent@redhat.com>
+
+If a task is added and the task list isn't empty and in progress
+tasks depend on the new task completion the task manager doesn't
+get signaled.
+---
+ CHANGELOG      |    1 +
+ daemon/state.c |   10 +++++-----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/CHANGELOG b/CHANGELOG
+index fb2f2d6..a01393c 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -2,6 +2,7 @@
+ =======================
+ - fix undefined authtype_requires_creds err if ldap enabled but without sasl.
+ - fix master map type check.
++- fix task manager not getting signaled.
+ 
+ 17/10/2013 autofs-5.0.8
+ =======================
+diff --git a/daemon/state.c b/daemon/state.c
+index 8d81788..3174a9c 100644
+--- a/daemon/state.c
++++ b/daemon/state.c
+@@ -818,13 +818,13 @@ done:
+ 		new = st_alloc_task(ap, state);
+ 		if (new)
+ 			list_add(&new->list, head);
+-		/* Added to empty state queue, kick state machine */
+-		signaled = 1;
+-		status = pthread_cond_signal(&cond);
+-		if (status)
+-			fatal(status);
+ 	}
+ 
++	signaled = 1;
++	status = pthread_cond_signal(&cond);
++	if (status)
++		fatal(status);
++
+ 	return 1;
+ }
+ 

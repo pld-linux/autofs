@@ -1,14 +1,12 @@
 --- autofs-5.0.5/daemon/Makefile.orig	2009-09-03 12:00:12.000000000 +0200
 +++ autofs-5.0.5/daemon/Makefile	2009-09-18 13:41:12.350991340 +0200
-@@ -22,12 +22,8 @@
+@@ -22,10 +22,8 @@
  LDFLAGS += -rdynamic
  LIBS = -ldl
  
 -ifeq ($(LDAP), 1)
--  ifeq ($(SASL), 1)
 -    CFLAGS += $(XML_FLAGS)
 -    LIBS += $(XML_LIBS)
--  endif
 -endif
 +CFLAGS += $(XML_FLAGS)
 +LIBS += $(XML_LIBS)
