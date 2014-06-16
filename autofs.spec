@@ -113,6 +113,9 @@ trzymanych na serwerze LDAP.
 %{__autoconf}
 
 export initdir=/etc/rc.d/init.d
+export piddir=/var/run
+export fifodir=/var/run
+export flagdir=/var/run
 %configure \
 	--with-openldap=%{?with_ldap:yes}%{!?with_ldap:no} \
 	--enable-force-shutdown=yes \
