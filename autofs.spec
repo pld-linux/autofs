@@ -141,8 +141,8 @@ install %{SOURCE1}	$RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
 
 install %{SOURCE2}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.master
 install %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.media
-install %{SOURCE4} 	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
-install %{SOURCE5} 	$RPM_BUILD_ROOT/etc/sysconfig/autofs
+install %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
+install %{SOURCE5}	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,var,tmp}
 
