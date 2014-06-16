@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# $Id$
-
 # Look at what a host is exporting to determine what we can mount.
 # This is very simple, but it appears to work surprisingly well
 
