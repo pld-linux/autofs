@@ -12,13 +12,13 @@ Summary(pl.UTF-8):	Demon autofs
 Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
-Version:	5.0.8
+Version:	5.1.0
 Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
-# Source0-md5:	4ed5271598fb1a76475364a4879c7578
+# Source0-md5:	4c34cacea07db3681b0da1befa229ec4
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
@@ -26,13 +26,6 @@ Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-makefile.patch
-Patch100:	autofs-5.0.8-fix-undefined-authtype_requires_creds-err-if-ldap-en.patch
-Patch101:	autofs-5.0.8-fix-master-map-type-check.patch
-Patch102:	autofs-5.0.8-fix-task-manager-not-getting-signaled.patch
-Patch103:	autofs-5.0.8-allow-with-systemd-to-take-a-path-arg.patch
-Patch104:	autofs-5.0.8-fix-WITH_LIBTIRPC-function-name.patch
-Patch105:	autofs-5.0.8-fix-ipv6-libtirpc-getport.patch
-Patch106:	autofs-5.0.8-fix-allow-with-systemd-to-take-a-path-arg.patch
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	bind-devel
@@ -113,13 +106,6 @@ trzymanych na serwerze LDAP.
 %setup -q
 %patch0 -p1
 %patch1 -p1
-%patch100 -p1
-%patch101 -p1
-%patch102 -p1
-%patch103 -p1
-%patch104 -p1
-%patch105 -p1
-%patch106 -p1
 
 %build
 %{__autoconf}
@@ -189,6 +175,7 @@ fi
 %dir %{_sysconfdir}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/autofs
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs.conf
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.home
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.master
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.media
@@ -222,6 +209,7 @@ fi
 %attr(755,root,root) %{_libdir}/autofs/mount_generic.so
 %attr(755,root,root) %{_libdir}/autofs/mount_nfs.so
 %attr(755,root,root) %{_libdir}/autofs/mount_nfs4.so
+%attr(755,root,root) %{_libdir}/autofs/parse_amd.so
 %attr(755,root,root) %{_libdir}/autofs/parse_hesiod.so
 %attr(755,root,root) %{_libdir}/autofs/parse_sun.so
 %{_mandir}/man[58]/*
