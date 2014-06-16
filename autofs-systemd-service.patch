@@ -1,0 +1,10 @@
+--- autofs-5.1.0/samples/autofs.service.in~	2014-06-04 09:37:01.000000000 +0200
++++ autofs-5.1.0/samples/autofs.service.in	2014-06-16 11:54:10.692427301 +0200
+@@ -1,6 +1,6 @@
+ [Unit]
+ Description=Automounts filesystems on demand
+-After=network.target ypbind.service sssd.service
++After=network.target ypbind.service sssd.service nslcd.service
+ 
+ [Service]
+ Type=forking
