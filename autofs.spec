@@ -17,7 +17,7 @@ Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
-Source0:	ftp://ftp.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
+Source0:	https://www.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
 # Source0-md5:	4c34cacea07db3681b0da1befa229ec4
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
@@ -27,10 +27,11 @@ Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-makefile.patch
 Patch2:		%{name}-systemd-service.patch
-BuildRequires:	autoconf
+URL:		http://www.autofs.org/
+BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake
-BuildRequires:	bind-devel
 BuildRequires:	bison
+BuildRequires:	cyrus-sasl-devel >= 2
 BuildRequires:	e2fsprogs
 BuildRequires:	flex
 BuildRequires:	heimdal-devel
@@ -101,7 +102,7 @@ maps stored on an LDAP server.
 
 %description ldap -l pl.UTF-8
 Ten pakiet zawiera moduł autofs potrzebny do używania map automounta
-trzymanych na serwerze LDAP.
+przechowywanych na serwerze LDAP.
 
 %prep
 %setup -q
@@ -116,12 +117,14 @@ export initdir=/etc/rc.d/init.d
 export piddir=/var/run
 export fifodir=/var/run
 export flagdir=/var/run
+export sssldir=%{_libdir}/sssd/modules
+export HAVE_SSS_AUTOFS=1
 %configure \
-	--with-openldap=%{?with_ldap:yes}%{!?with_ldap:no} \
-	--enable-force-shutdown=yes \
+	--enable-force-shutdown \
 	--with-confdir=%{_sysconfdir} \
-	--with-mapdir=%{_sysconfdir} \
 	--with-libtirpc \
+	--with-mapdir=%{_sysconfdir} \
+	--with-openldap%{!?with_ldap:=no} \
 	--with-systemd=%{systemdunitdir}
 
 %{__make} -j1 \
@@ -147,7 +150,7 @@ install %{SOURCE5}	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,var,tmp}
 
 # replaced in PLD by auto.media
-rm $RPM_BUILD_ROOT%{_sysconfdir}/auto.misc
+%{__rm} $RPM_BUILD_ROOT%{_sysconfdir}/auto.misc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -176,7 +179,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc CHANGELOG CREDITS README*
+%doc CHANGELOG COPYRIGHT CREDITS README*
 %dir %{_sysconfdir}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/autofs
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs
@@ -202,6 +205,7 @@ fi
 %attr(755,root,root) %{_libdir}/autofs/lookup_nis.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_nisplus.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_program.so
+%attr(755,root,root) %{_libdir}/autofs/lookup_sss.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_userhome.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_yp.so
 %attr(755,root,root) %{_libdir}/autofs/mount_afs.so
@@ -217,7 +221,11 @@ fi
 %attr(755,root,root) %{_libdir}/autofs/parse_amd.so
 %attr(755,root,root) %{_libdir}/autofs/parse_hesiod.so
 %attr(755,root,root) %{_libdir}/autofs/parse_sun.so
-%{_mandir}/man[58]/*
+%{_mandir}/man5/auto.master.5*
+%{_mandir}/man5/autofs.5*
+%{_mandir}/man5/autofs.conf.5*
+%{_mandir}/man8/autofs.8*
+%{_mandir}/man8/automount.8*
 
 %if %{with ldap}
 %files ldap
@@ -225,4 +233,5 @@ fi
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs_ldap_auth.conf
 %attr(755,root,root) %{_libdir}/autofs/lookup_ldap.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_ldaps.so
+%{_mandir}/man5/autofs_ldap_auth.conf.5*
 %endif
