@@ -12,13 +12,13 @@ Summary(pl.UTF-8):	Demon autofs
 Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
-Version:	5.1.0
+Version:	5.1.1
 Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	https://www.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
-# Source0-md5:	4c34cacea07db3681b0da1befa229ec4
+# Source0-md5:	889c9d2f0e76f08ae0ff0d206f119098
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
