@@ -1,10 +1,10 @@
---- autofs-5.1.1/samples/autofs.service.in.orig	2016-03-29 22:03:38.660685363 +0200
-+++ autofs-5.1.1/samples/autofs.service.in	2016-03-30 15:53:17.951325347 +0200
+--- autofs-5.1.2/samples/autofs.service.in.orig	2016-07-31 17:47:43.219460038 +0200
++++ autofs-5.1.2/samples/autofs.service.in	2016-07-31 17:54:58.049454078 +0200
 @@ -1,6 +1,6 @@
  [Unit]
  Description=Automounts filesystems on demand
--After=network.target ypbind.service sssd.service network-online.target
-+After=network.target ypbind.service sssd.service network-online.target nslcd.service
+-After=network.target ypbind.service sssd.service network-online.target remote-fs.target
++After=network.target ypbind.service sssd.service network-online.target remote-fs.target nslcd.service
  Wants=network-online.target
  
  [Service]
