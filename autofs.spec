@@ -13,7 +13,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.1.2
-Release:	1
+Release:	2
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
