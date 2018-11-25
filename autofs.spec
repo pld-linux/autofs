@@ -12,13 +12,13 @@ Summary(pl.UTF-8):	Demon autofs
 Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
-Version:	5.1.4
+Version:	5.1.5
 Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	https://www.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
-# Source0-md5:	5d35e3282e7a47ec1a5acaeebcc51db2
+# Source0-md5:	61d2cfbf51159c9c82b57e1ea9c34376
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
@@ -37,11 +37,12 @@ BuildRequires:	flex
 BuildRequires:	heimdal-devel
 BuildRequires:	hesiod-devel
 BuildRequires:	libtirpc-devel
-BuildRequires:	libxml2-devel
+BuildRequires:	libxml2-devel >= 2
 BuildRequires:	mount
 %{?with_ldap:BuildRequires:	openldap-devel >= 2.4.6}
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.647
+BuildRequires:	systemd-devel >= 1:209
 Requires(post,preun):	/sbin/chkconfig
 Requires(post,preun,postun):	systemd-units >= 38
 Requires:	mktemp
@@ -135,18 +136,18 @@ export HAVE_SSS_AUTOFS=1
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{/misc,/net,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
-	$RPM_BUILD_ROOT/etc/{rc.d/init.d,autofs,sysconfig}
+install -d $RPM_BUILD_ROOT{/misc,/net,%{_sysconfdir},%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
+	$RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig}
 
-%{__make} install \
+%{__make} install install_samples \
 	INSTALLROOT=$RPM_BUILD_ROOT
 
 install %{SOURCE1}	$RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
 
-install %{SOURCE2}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.master
-install %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.media
-install %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
-install %{SOURCE5}	$RPM_BUILD_ROOT/etc/sysconfig/autofs
+cp -p %{SOURCE2}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.master
+cp -p %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.media
+cp -p %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
+cp -p %{SOURCE5}	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,var,tmp}
 
