@@ -12,13 +12,13 @@ Summary(pl.UTF-8):	Demon autofs
 Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
-Version:	5.1.5
+Version:	5.1.6
 Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	https://www.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
-# Source0-md5:	61d2cfbf51159c9c82b57e1ea9c34376
+# Source0-md5:	b27ee7a1674ae1779aaf75c5e90b0f1e
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
@@ -27,7 +27,6 @@ Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
 Patch1:		%{name}-makefile.patch
 Patch2:		%{name}-systemd-service.patch
-URL:		http://www.autofs.org/
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake
 BuildRequires:	bison
