@@ -13,7 +13,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.1.6
-Release:	1
+Release:	2
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -35,6 +35,7 @@ BuildRequires:	e2fsprogs
 BuildRequires:	flex
 BuildRequires:	heimdal-devel
 BuildRequires:	hesiod-devel
+BuildRequires:	libnsl-devel
 BuildRequires:	libtirpc-devel
 BuildRequires:	libxml2-devel >= 2
 BuildRequires:	mount
