@@ -12,21 +12,20 @@ Summary(pl.UTF-8):	Demon autofs
 Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
-Version:	5.1.6
-Release:	2
+Version:	5.1.7
+Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	https://www.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
-# Source0-md5:	b27ee7a1674ae1779aaf75c5e90b0f1e
+# Source0-md5:	6bd1ea8a9e5dc3a7dc95119e3bbaf52c
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
 Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
 Patch0:		%{name}-open_max.patch
-Patch1:		%{name}-makefile.patch
-Patch2:		%{name}-systemd-service.patch
+Patch1:		%{name}-systemd-service.patch
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake
 BuildRequires:	bison
@@ -110,7 +109,6 @@ przechowywanych na serwerze LDAP.
 %setup -q
 %patch0 -p1
 %patch1 -p1
-%patch2 -p1
 
 %build
 %{__autoconf}
@@ -197,6 +195,7 @@ fi
 %{systemdunitdir}/autofs.service
 %attr(755,root,root) %{_sbindir}/automount
 %dir /net
+%attr(755,root,root) %{_libdir}/libautofs.so
 %dir %{_libdir}/autofs
 %attr(755,root,root) %{_libdir}/autofs/lookup_dir.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_file.so
