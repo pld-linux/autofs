@@ -125,10 +125,12 @@ export HAVE_SSS_AUTOFS=1
 	--with-openldap%{!?with_ldap:=no} \
 	--with-systemd=%{systemdunitdir}
 
+CFLAGS="%{rpmcflags} %{rpmcppflags}" \
+LDFLAGS="%{rpmldflags}" \
 %{__make} -j1 \
 	initdir=/etc/rc.d/init.d \
 	CC="%{__cc}" \
-	DAEMON_CFLAGS="-fPIE %{rpmcflags}"
+	DONTSTRIP=1
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -157,7 +159,7 @@ rm -rf $RPM_BUILD_ROOT
 /sbin/chkconfig --add autofs
 # triggerpostun would get called after %%post
 if [ -f /var/lock/subsys/automount ]; then
-	mv /var/lock/subsys/{automount,autofs}
+	mv -f /var/lock/subsys/{automount,autofs}
 fi
 %service autofs restart "autofs daemon"
 %systemd_post autofs.service
