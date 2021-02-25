@@ -24,8 +24,7 @@ Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
 Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
-Patch0:		%{name}-open_max.patch
-Patch1:		%{name}-systemd-service.patch
+Patch0:		%{name}-systemd-service.patch
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake
 BuildRequires:	bison
@@ -108,7 +107,6 @@ przechowywanych na serwerze LDAP.
 %prep
 %setup -q
 %patch0 -p1
-%patch1 -p1
 
 %build
 %{__autoconf}
