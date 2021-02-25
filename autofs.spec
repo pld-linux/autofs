@@ -25,6 +25,7 @@ Source3:	%{name}-auto.media
 Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
 Patch0:		%{name}-systemd-service.patch
+URL:		https://git.kernel.org/pub/scm/linux/storage/autofs/autofs.git
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake
 BuildRequires:	bison
