@@ -2,7 +2,8 @@
 # - change /net to something FHS-compliant ?
 #
 # Conditional build:
-%bcond_without	ldap	# don't build LDAP extension module
+%bcond_without	hesiod	# Hesiod support
+%bcond_without	ldap	# LDAP extension module
 #
 Summary:	autofs daemon
 Summary(de.UTF-8):	autofs daemon
@@ -12,13 +13,13 @@ Summary(pl.UTF-8):	Demon autofs
 Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
-Version:	5.1.8
+Version:	5.1.9
 Release:	1
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	https://www.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
-# Source0-md5:	72d81645d39a857c3d16bd3a32e9cb44
+# Source0-md5:	06fb59a03c82364a0d788435b6853d70
 Source1:	%{name}.init
 Source2:	%{name}-auto.master
 Source3:	%{name}-auto.media
@@ -33,7 +34,7 @@ BuildRequires:	cyrus-sasl-devel >= 2
 BuildRequires:	e2fsprogs
 BuildRequires:	flex
 BuildRequires:	heimdal-devel
-BuildRequires:	hesiod-devel
+%{?with_hesiod:BuildRequires:	hesiod-devel}
 BuildRequires:	libnsl-devel
 BuildRequires:	libtirpc-devel
 BuildRequires:	libxml2-devel >= 2
@@ -42,6 +43,8 @@ BuildRequires:	mount
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.647
 BuildRequires:	systemd-devel >= 1:209
+BuildRequires:	tar >= 1:1.22
+BuildRequires:	xz
 Requires(post,preun):	/sbin/chkconfig
 Requires(post,preun,postun):	systemd-units >= 38
 Requires:	mktemp
@@ -121,6 +124,7 @@ export HAVE_SSS_AUTOFS=1
 %configure \
 	--enable-force-shutdown \
 	--with-confdir=%{_sysconfdir} \
+	%{!?with_hesiod:--without-hesiod} \
 	--with-libtirpc \
 	--with-mapdir=%{_sysconfdir} \
 	--with-openldap%{!?with_ldap:=no} \
@@ -201,7 +205,9 @@ fi
 %attr(755,root,root) %{_libdir}/autofs/lookup_dir.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_file.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_files.so
+%if %{with hesiod}
 %attr(755,root,root) %{_libdir}/autofs/lookup_hesiod.so
+%endif
 %attr(755,root,root) %{_libdir}/autofs/lookup_hosts.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_multi.so
 %attr(755,root,root) %{_libdir}/autofs/lookup_nis.so
@@ -221,7 +227,9 @@ fi
 %attr(755,root,root) %{_libdir}/autofs/mount_nfs.so
 %attr(755,root,root) %{_libdir}/autofs/mount_nfs4.so
 %attr(755,root,root) %{_libdir}/autofs/parse_amd.so
+%if %{with hesiod}
 %attr(755,root,root) %{_libdir}/autofs/parse_hesiod.so
+%endif
 %attr(755,root,root) %{_libdir}/autofs/parse_sun.so
 %{_mandir}/man5/auto.master.5*
 %{_mandir}/man5/autofs.5*
