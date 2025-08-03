@@ -14,7 +14,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.1.9
-Release:	2
+Release:	3
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -26,6 +26,27 @@ Source3:	%{name}-auto.media
 Source4:	%{name}-auto.net
 Source5:	%{name}.sysconfig
 Patch0:		%{name}-systemd-service.patch
+Patch1:		cifs-creds-path.patch
+# https://www.kernel.org/pub/linux/daemons/autofs/v5/patches-5.2.0/
+Patch100:	autofs-5.1.9-update-configure.patch
+Patch101:	autofs-5.1.9-fix-ldap_parse_page_control-check.patch
+Patch102:	autofs-5.1.9-fix-crash-in-make_options_string.patch
+Patch103:	autofs-5.1.9-Fix-incompatible-function-pointer-types-in-cyrus-sasl-module.patch
+Patch104:	autofs-5.1.9-fix-always-recreate-credential-cache.patch
+Patch105:	autofs-5.1.9-fix-changelog.patch
+Patch106:	autofs-5.1.9-fix-amd-external-mount-error-handling.patch
+Patch107:	autofs-5.1.9-fix-amd-external-mount-mount-handling.patch
+Patch108:	autofs-5.1.9-dont-free-ext-mount-if-mounted.patch
+Patch109:	autofs-5.1.9-refactor-amd-function-do_program_mount.patch
+Patch110:	autofs-5.1.9-refactor-amd-function-umount_amd_ext_mount.patch
+Patch111:	autofs-5.1.9-add-flags-argument-to-amd-do_program_mount.patch
+Patch112:	autofs-5.1.9-fix-amd-cache-options-not-copied.patch
+Patch113:	autofs-5.1.9-seperate-amd-mount-and-entry-flags.patch
+Patch114:	autofs-5.1.9-make-ioctl-ops-timeout-handle-per-dentry-expire.patch
+Patch115:	autofs-5.1.9-refactor-amd-mount-options-handling.patch
+Patch116:	autofs-5.1.9-add-some-unimplemented-amd-map-options.patch
+Patch117:	autofs-5.1.9-fix-get-parent-multi-mount-check-in-try_remount.patch
+Patch118:	autofs-5.1.9-fix-deadlock-in-remount.patch
 URL:		https://git.kernel.org/pub/scm/linux/storage/autofs/autofs.git
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake
@@ -111,6 +132,27 @@ przechowywanych na serwerze LDAP.
 %prep
 %setup -q
 %patch -P0 -p1
+%patch -P1 -p1
+
+%patch -P100 -p1
+%patch -P101 -p1
+%patch -P102 -p1
+%patch -P103 -p1
+%patch -P104 -p1
+%patch -P105 -p1
+%patch -P106 -p1
+%patch -P107 -p1
+%patch -P108 -p1
+%patch -P109 -p1
+%patch -P110 -p1
+%patch -P111 -p1
+%patch -P112 -p1
+%patch -P113 -p1
+%patch -P114 -p1
+%patch -P115 -p1
+%patch -P116 -p1
+%patch -P117 -p1
+%patch -P118 -p1
 
 %build
 %{__autoconf}
@@ -139,7 +181,7 @@ LDFLAGS="%{rpmldflags}" \
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{/misc,/net,%{_sysconfdir},%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
+install -d $RPM_BUILD_ROOT{/misc,/net,%{_sysconfdir}/creds,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig}
 
 %{__make} install install_samples \
@@ -185,8 +227,9 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc CHANGELOG COPYRIGHT CREDITS README*
-%dir %{_sysconfdir}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/autofs
+%dir %{_sysconfdir}
+%dir %attr(750,root,root) %{_sysconfdir}/creds
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs.conf
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.home

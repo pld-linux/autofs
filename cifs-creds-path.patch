@@ -1,0 +1,20 @@
+--- autofs-5.1.9/samples/auto.smb~	2023-11-03 01:46:34.000000000 +0100
++++ autofs-5.1.9/samples/auto.smb	2025-08-03 16:50:13.596664102 +0200
+@@ -15,7 +15,7 @@
+ 
+ # This script knows 2 methods to obtain credentials:
+ # 1) if a credentials file (see mount.cifs(8)) is present
+-#    under /etc/creds/$key, use it.
++#    under /etc/autofs/creds/$key, use it.
+ # 2) Otherwise, try to find a usable kerberos credentials cache
+ #    for the uid of the user that was first to trigger the mount
+ #    and use that.
+@@ -51,7 +51,7 @@
+ 
+ [ -x $SMBCLIENT ] || exit 1
+ 
+-creds=/etc/creds/$key
++creds=/etc/autofs/creds/$key
+ if [ -f "$creds" ]; then
+     opts="$opts"',uid=$UID,gid=$GID,credentials='"$creds"
+     smbopts="-A $creds"
