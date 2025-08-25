@@ -14,19 +14,18 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.1.9
-Release:	3
+Release:	4
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
 Source0:	https://www.kernel.org/pub/linux/daemons/autofs/v5/%{name}-%{version}.tar.xz
 # Source0-md5:	06fb59a03c82364a0d788435b6853d70
 Source1:	%{name}.init
-Source2:	%{name}-auto.master
-Source3:	%{name}-auto.media
-Source4:	%{name}-auto.net
-Source5:	%{name}.sysconfig
+Source2:	%{name}.sysconfig
 Patch0:		%{name}-systemd-service.patch
 Patch1:		cifs-creds-path.patch
+Patch2:		fix-nfs4-mounts-in-auto-net.patch
+Patch3:		cleanup-master-map.patch
 # https://www.kernel.org/pub/linux/daemons/autofs/v5/patches-5.2.0/
 Patch100:	autofs-5.1.9-update-configure.patch
 Patch101:	autofs-5.1.9-fix-ldap_parse_page_control-check.patch
@@ -133,6 +132,7 @@ przechowywanych na serwerze LDAP.
 %setup -q
 %patch -P0 -p1
 %patch -P1 -p1
+%patch -P2 -p1
 
 %patch -P100 -p1
 %patch -P101 -p1
@@ -181,7 +181,7 @@ LDFLAGS="%{rpmldflags}" \
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{/misc,/net,%{_sysconfdir}/creds,%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
+install -d $RPM_BUILD_ROOT{/misc,/net,%{_sysconfdir}/{creds,auto.master.d},%{_sbindir},%{_libdir}/autofs,%{_mandir}/man{5,8}} \
 	$RPM_BUILD_ROOT/etc/{rc.d/init.d,sysconfig}
 
 %{__make} install install_samples \
@@ -189,10 +189,7 @@ install -d $RPM_BUILD_ROOT{/misc,/net,%{_sysconfdir}/creds,%{_sbindir},%{_libdir
 
 install %{SOURCE1}	$RPM_BUILD_ROOT/etc/rc.d/init.d/autofs
 
-cp -p %{SOURCE2}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.master
-cp -p %{SOURCE3}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.media
-cp -p %{SOURCE4}	$RPM_BUILD_ROOT%{_sysconfdir}/auto.net
-cp -p %{SOURCE5}	$RPM_BUILD_ROOT/etc/sysconfig/autofs
+cp -p %{SOURCE2}	$RPM_BUILD_ROOT/etc/sysconfig/autofs
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/auto.{home,var,tmp}
 
@@ -234,7 +231,6 @@ fi
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/autofs.conf
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.home
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.master
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.media
 %attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.net
 %attr(750,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.smb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/auto.tmp
