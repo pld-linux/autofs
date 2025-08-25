@@ -14,7 +14,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.1.9
-Release:	4
+Release:	5
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -133,6 +133,7 @@ przechowywanych na serwerze LDAP.
 %patch -P0 -p1
 %patch -P1 -p1
 %patch -P2 -p1
+%patch -P3 -p1
 
 %patch -P100 -p1
 %patch -P101 -p1
