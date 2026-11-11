@@ -1,0 +1,39 @@
+autofs-5.1.9 - fix off by one error in macro_init()
+
+From: Ian Kent <raven@themaw.net>
+
+If gethostname() succeeds then the NULL terminated host name is returned
+up to the maximum length of the passed in buffer. But in the man page it
+isn't specified whether the NULL terminator is included in that length.
+
+In any case the host plus domain name in total cannot be greater than
+HOST_NAME_MAX + 1, including a NULL terminator.
+
+Since short name may take the full length of the array it should be
+HOST_NAME_MAX + 1 not HOST_NAME_MAX.
+
+Signed-off-by: Ian Kent <raven@themaw.net>
+[PLD: CHANGELOG hunk dropped to apply outside upstream patch_order]
+---
+diff --git a/lib/macros.c b/lib/macros.c
+index 5def26da8..b1f36596d 100644
+--- a/lib/macros.c
++++ b/lib/macros.c
+@@ -25,7 +25,7 @@
+ static struct utsname un;
+ static char processor[65];		/* Not defined on Linux, so we make our own */
+ static char hostname[HOST_NAME_MAX + 1];
+-static char host[HOST_NAME_MAX];
++static char host[HOST_NAME_MAX + 1];
+ static char domain[HOST_NAME_MAX];
+ static char hostd[HOST_NAME_MAX + 1];
+ static char endian[] = "unknown";
+@@ -80,7 +80,7 @@ void macro_init(void)
+ 	char *local_domain;
+ 
+ 	memset(hostname, 0, HOST_NAME_MAX + 1);
+-	memset(host, 0, HOST_NAME_MAX);
++	memset(host, 0, HOST_NAME_MAX + 1);
+ 	memset(domain, 0, HOST_NAME_MAX);
+ 	memset(hostd, 0, HOST_NAME_MAX + 1);
+ 

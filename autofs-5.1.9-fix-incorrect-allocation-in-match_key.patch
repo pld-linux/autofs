@@ -1,0 +1,23 @@
+autofs-5.1.9 - fix incorrect allocation in match_key()
+
+From: Ian Kent <raven@themaw.net>
+
+There's a mistake in the length of the string used in matching
+amd map keys in the ldap module match_key() function.
+
+Signed-off-by: Ian Kent <raven@themaw.net>
+[PLD: CHANGELOG hunk dropped to apply outside upstream patch_order]
+---
+diff --git a/modules/lookup_ldap.c b/modules/lookup_ldap.c
+index 53416c6fc..d27a6bb83 100644
+--- a/modules/lookup_ldap.c
++++ b/modules/lookup_ldap.c
+@@ -3721,7 +3721,7 @@ static int match_key(struct autofs_point *ap,
+ 		char *match;
+ 		size_t len;
+ 		*prefix = '\0';
+-		len = strlen(lkp_key + 3);
++		len = strlen(lkp_key) + 3;
+ 		match = malloc(len);
+ 		if (!match) {
+ 			char *estr = strerror_r(errno, buf, MAX_ERR_BUF);

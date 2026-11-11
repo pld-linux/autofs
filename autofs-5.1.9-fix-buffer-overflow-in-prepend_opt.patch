@@ -1,0 +1,129 @@
+autofs-5.1.9 - fix buffer overflow in prepend_opt()
+
+From: Ian Kent <raven@themaw.net>
+
+A stack buffer overflow and missing NULL terminator in prepend_opt()
+which affects autofs versions from 5.1.0 has been identified.
+
+When building mount options an oversized AMD map `OPTION` token can
+overflow the fixed 1024-byte stack buffer used to build mount options
+and the copied-back string also loses its terminating NULL during AMD
+map parsing.
+
+Fix it by making prepend_opt() bounded, copy back the terminating
+`\0`, and fail parsing when the combined option string would exceed
+`MAX_OPTS_LEN`.
+
+This patch was provided as part of a vulnerability report which was
+generated using AI technology.
+
+Reported-By: AISLE Research
+Fixes: 6f065977a6 ("autofs-5.0.9 - amd lookup add parse_amd.c")
+Signed-off-by: Ian Kent <raven@themaw.net>
+[PLD: CHANGELOG hunk dropped to apply outside upstream patch_order]
+---
+diff --git a/modules/amd_parse.y b/modules/amd_parse.y
+index 416f2289f..d606b6293 100644
+--- a/modules/amd_parse.y
++++ b/modules/amd_parse.y
+@@ -67,7 +67,7 @@ static struct list_head *entries;
+ static struct autofs_point *pap;
+ struct substvar *psv;
+ static char opts[MAX_OPTS_LEN];
+-static void prepend_opt(char *, char *);
++static int prepend_opt(char *, char *);
+ static char msg_buf[MAX_ERR_LEN];
+ 
+ #define YYDEBUG 0
+@@ -438,18 +438,24 @@ option_assignment: MAP_OPTION OPTION_ASSIGN FS_TYPE
+ 
+ options: OPTION
+ 	{
+-		if (match_mnt_option($1, opts))
+-			prepend_opt(opts, $1);
++		if (match_mnt_option($1, opts) && !prepend_opt(opts, $1)) {
++			amd_msg("mount options too long");
++			YYABORT;
++		}
+ 	}
+ 	| OPTION COMMA options
+ 	{
+-		if (match_mnt_option($1, opts))
+-			prepend_opt(opts, $1);
++		if (match_mnt_option($1, opts) && !prepend_opt(opts, $1)) {
++			amd_msg("mount options too long");
++			YYABORT;
++		}
+ 	}
+ 	| OPTION COMMA
+ 	{
+-		if (match_mnt_option($1, opts))
+-			prepend_opt(opts, $1);
++		if (match_mnt_option($1, opts) && !prepend_opt(opts, $1)) {
++			amd_msg("mount options too long");
++			YYABORT;
++		}
+ 	}
+ 	;
+ 
+@@ -663,9 +669,10 @@ static int match_mnt_option(char *option, char *options)
+ 		entry.flags &= ~AMD_MOUNT_OPT_NOUNMOUNT;
+ 		entry.flags |= AMD_MOUNT_OPT_UNMOUNT;
+ 	} else if (!strcmp(option, "nounmount")) {
+-		if (entry.flags & AMD_MOUNT_TYPE_AUTO)
+-			prepend_opt(opts, "timeout=0");
+-		else {
++		if (entry.flags & AMD_MOUNT_TYPE_AUTO) {
++			if (!prepend_opt(opts, "timeout=0"))
++				goto out;
++		} else {
+ 			entry.flags &= ~AMD_MOUNT_OPT_UNMOUNT;
+ 			entry.flags |= AMD_MOUNT_OPT_NOUNMOUNT;
+ 			entry.utimeout = 0;
+@@ -677,9 +684,10 @@ static int match_mnt_option(char *option, char *options)
+ 		 * the root so there's no need for special handling,
+ 		 * just pass the timeout=<seconds> autofs option.
+ 		 */
+-		if (entry.flags & AMD_MOUNT_TYPE_AUTO)
+-			prepend_opt(options, ++option);
+-		else {
++		if (entry.flags & AMD_MOUNT_TYPE_AUTO) {
++			if (!prepend_opt(options, ++option))
++				goto out;
++		} else {
+ 			if (strchr(option, '=')) {
+ 				unsigned long tout;
+ 				int ret;
+@@ -693,19 +701,24 @@ static int match_mnt_option(char *option, char *options)
+ 		}
+ 	} else
+ 		ret = 1;
+-
++out:
+ 	return ret;
+ }
+ 
+-static void prepend_opt(char *dest, char *opt)
++static int prepend_opt(char *dest, char *opt)
+ {
+ 	char new[MAX_OPTS_LEN];
+-	strcpy(new, opt);
+-	if (*dest != '\0') {
+-		strcat(new, ",");
+-		strcat(new, dest);
+-	}
+-	memmove(dest, new, strlen(new));
++	int n;
++
++	if (!dest || !opt)
++		return 0;
++
++	n = snprintf(new, sizeof(new), (*dest != '\0') ? "%s,%s" : "%s", opt, dest);
++	if (n < 0 || n >= (int) sizeof(new))
++		return 0;
++
++	memmove(dest, new, (size_t) n + 1);
++	return 1;
+ }
+ 
+ #if YYDEBUG

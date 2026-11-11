@@ -14,7 +14,7 @@ Summary(pt_BR.UTF-8):	Servidor autofs
 Summary(tr.UTF-8):	autofs sunucu süreci
 Name:		autofs
 Version:	5.1.9
-Release:	6
+Release:	7
 Epoch:		1
 License:	GPL v2+
 Group:		Daemons
@@ -46,6 +46,10 @@ Patch115:	autofs-5.1.9-refactor-amd-mount-options-handling.patch
 Patch116:	autofs-5.1.9-add-some-unimplemented-amd-map-options.patch
 Patch117:	autofs-5.1.9-fix-get-parent-multi-mount-check-in-try_remount.patch
 Patch118:	autofs-5.1.9-fix-deadlock-in-remount.patch
+Patch119:	autofs-5.1.9-fix-string-length-check-in-merge_options.patch
+Patch120:	autofs-5.1.9-fix-off-by-one-error-in-macro_init.patch
+Patch121:	autofs-5.1.9-fix-incorrect-allocation-in-match_key.patch
+Patch122:	autofs-5.1.9-fix-buffer-overflow-in-prepend_opt.patch
 URL:		https://git.kernel.org/pub/scm/linux/storage/autofs/autofs.git
 BuildRequires:	autoconf >= 2.50
 BuildRequires:	automake
@@ -154,6 +158,10 @@ przechowywanych na serwerze LDAP.
 %patch -P116 -p1
 %patch -P117 -p1
 %patch -P118 -p1
+%patch -P119 -p1
+%patch -P120 -p1
+%patch -P121 -p1
+%patch -P122 -p1
 
 %build
 %{__autoconf}

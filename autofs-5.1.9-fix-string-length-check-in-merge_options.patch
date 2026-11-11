@@ -1,0 +1,79 @@
+autofs-5.1.9 - fix string length check in merge_options()
+
+From: Ian Kent <raven@themaw.net>
+
+In function merge_options() an incorrect variable is used for a length
+check.
+
+Fix this and also initialize the local variable before use as well as
+store it's length to avoid multiple strlen() calls.
+
+Signed-off-by: Ian Kent <raven@themaw.net>
+[PLD: CHANGELOG hunk dropped to apply outside upstream patch_order]
+---
+diff --git a/lib/parse_subs.c b/lib/parse_subs.c
+index d48fdee2a..2acb056ba 100644
+--- a/lib/parse_subs.c
++++ b/lib/parse_subs.c
+@@ -971,9 +971,10 @@ char *merge_options(const char *opt1, const char *opt2)
+ 	if (!strcmp(opt1, opt2))
+ 		return strdup(opt1);
+ 
+-	if (strlen(str) > MAX_OPTIONS_LEN)
++	if (strlen(opt1) > MAX_OPTIONS_LEN)
+ 		return NULL;
+ 	memset(result, 0, sizeof(result));
++	str[0] = 0;
+ 	strcpy(str, opt1);
+ 
+ 	resultlen = 0;
+@@ -981,10 +982,12 @@ char *merge_options(const char *opt1, const char *opt2)
+ 	while (tok) {
+ 		const char *this = (const char *) tok;
+ 		char *eq = strchr(this, '=');
++		size_t this_len = strlen(this);
++
+ 		if (eq) {
+ 			*eq = '\0';
+ 			if (!hasopt(opt2, this)) {
+-				if (resultlen + strlen(this) > MAX_OPTIONS_LEN)
++				if (resultlen + this_len > MAX_OPTIONS_LEN)
+ 					return NULL;
+ 				*eq = '=';
+ 				if (!*result)
+@@ -992,7 +995,7 @@ char *merge_options(const char *opt1, const char *opt2)
+ 				else
+ 					strcat(result, this);
+ 				strcat(result, ",");
+-				resultlen += strlen(this) + 1;
++				resultlen += this_len + 1;
+ 				goto next;
+ 			}
+ 		}
+@@ -1019,7 +1022,7 @@ char *merge_options(const char *opt1, const char *opt2)
+ 			if (hasopt(opt2, neg))
+ 				goto next;
+ 		} else {
+-			if ((strlen(this) + 2) > MAX_OPTION_LEN)
++			if ((this_len + 2) > MAX_OPTION_LEN)
+ 				return NULL;
+ 			strcpy(neg, "no");
+ 			strcat(neg, this);
+@@ -1030,7 +1033,7 @@ char *merge_options(const char *opt1, const char *opt2)
+ 		if (hasopt(opt2, tok))
+ 			goto next;
+ 
+-		if (resultlen + strlen(this) + 1 > MAX_OPTIONS_LEN)
++		if ((resultlen + this_len + 1) > MAX_OPTIONS_LEN)
+ 			return NULL;
+ 
+ 		if (!*result)
+@@ -1038,7 +1041,7 @@ char *merge_options(const char *opt1, const char *opt2)
+ 		else
+ 			strcat(result, this);
+ 		strcat(result, ",");
+-		resultlen =+ strlen(this) + 1;
++		resultlen += this_len + 1;
+ next:
+ 		tok = strtok_r(NULL, ",", &ptr);
+ 	}
